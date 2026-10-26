@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Labo — Crazy Racing</title>
+<link rel="icon" href="favicon-labo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="js/lib/labo-shell.css?v=0.1.0">
+<style>
+  .planche { display: flex; gap: 24px; align-items: flex-end; flex-wrap: wrap; }
+  .planche figure { margin: 0; display: grid; justify-items: center; gap: 6px; font-size: 13px; }
+  .planche canvas { image-rendering: pixelated; }
+  .nuancier { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; }
+  .nuancier div { padding: 12px; border-radius: 6px; font: 13px ui-monospace, monospace; }
+  .labo-stage button.essai { min-height: 44px; padding: 0 14px; margin: 0 6px 6px 0; border: 1px solid rgba(0,0,0,.2); border-radius: 6px; background: #fff; }
+  table.contraste { border-collapse: collapse; font: 13px ui-monospace, monospace; }
+  table.contraste td, table.contraste th { border: 1px solid rgba(0,0,0,.12); padding: 6px 8px; text-align: center; }
+</style>
+</head>
+<body>
+<div id="labo"></div>
+<script type="module" src="js/labo.js?v=0.1.0"></script>
+</body>
+</html>

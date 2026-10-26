@@ -1,0 +1,97 @@
+/* ─── Coquille du Labo — partagé entre les jeux ────────────────────────────
+   Source de vérité : supershivas/game-system/modules/labo-shell.css
+   Va avec labo-shell.js (section 16 de CONVENTIONS.md). En-tête sur la
+   couleur d'accent du jeu (--jeu-accent), écran à hauteur fixe, seule la
+   variante défile. Mobile (≤ 768 px) : pas de marge, sujets en puces,
+   variantes dans une barre en bas.
+   ─────────────────────────────────────────────────────────────────────────── */
+
+.labo {
+  --labo-accent: var(--jeu-accent, #c23b3b);
+  --labo-fond: var(--labo-fond-page, #f4f4f2);
+  --labo-encre: #1c1c1e;
+  --labo-trait: rgba(0, 0, 0, .12);
+  position: fixed; inset: 0; height: 100dvh;
+  display: grid; grid-template-rows: auto auto 1fr auto; grid-template-columns: minmax(0, 1fr);
+  background: var(--labo-fond); color: var(--labo-encre);
+  font: 15px/1.45 system-ui, -apple-system, 'Segoe UI', sans-serif;
+  user-select: none;
+}
+.labo button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; min-height: 44px; }
+.labo-icon { width: 22px; height: 22px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+.labo-head { display: flex; align-items: center; gap: 12px; padding: 0 12px; min-height: 52px; background: var(--labo-accent); color: #fff; }
+.labo-back { min-height: 44px; display: flex; align-items: center; gap: 10px; color: inherit; text-decoration: none; font-weight: 600; white-space: nowrap; }
+.labo-badge { font: 12px/1 ui-monospace, 'DM Mono', monospace; letter-spacing: .2em; border: 1px solid rgba(255, 255, 255, .7); padding: 4px 6px; }
+.labo-groups { display: flex; gap: 2px; overflow-x: auto; flex: 1; min-width: 0; }
+.labo-group { padding: 0 12px; opacity: .75; border-bottom: 2px solid transparent; }
+.labo-group.is-on { opacity: 1; border-bottom-color: #fff; }
+.labo-tool { display: grid; place-items: center; width: 44px; height: 44px; color: inherit; }
+
+.labo-chips { display: none; }
+.labo-body { display: grid; grid-template-columns: 240px 1fr; min-height: 0; }
+.labo-side { overflow-y: auto; border-right: 1px solid var(--labo-trait); padding: 8px 0; }
+.labo-topic-btn { width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 0 14px; text-align: left; }
+.labo-topic-btn small { opacity: .5; }
+.labo-topic.is-open > .labo-topic-btn { font-weight: 600; }
+.labo-variants { display: grid; padding: 0 0 6px 14px; }
+.labo-variant { text-align: left; padding: 0 10px; opacity: .8; }
+.labo-variant b { position: relative; display: inline-grid; place-items: center; width: 22px; height: 22px; font: 12px ui-monospace, monospace; border-radius: 4px; }
+.labo-variant.is-on { opacity: 1; }
+.labo-variant.is-on b { background: var(--labo-accent); color: #fff; }
+.labo-variant b.is-kept::after, .labo-letter.is-kept::after { content: ''; position: absolute; width: 5px; height: 5px; border-radius: 50%; background: var(--labo-accent); transform: translate(10px, -10px); }
+
+.labo-main { display: grid; grid-template-rows: auto 1fr; min-height: 0; min-width: 0; }
+.labo-info { padding: 12px 16px 4px; }
+.labo-info h1 { font-size: 17px; margin: 0; display: flex; gap: 10px; align-items: center; }
+.labo-info p { margin: 4px 0 0; opacity: .75; }
+.labo-status { font: 11px ui-monospace, monospace; letter-spacing: .1em; text-transform: uppercase; padding: 2px 6px; border: 1px solid var(--labo-trait); border-radius: 4px; }
+.labo-status.is-retenue { border-color: var(--labo-accent); color: var(--labo-accent); }
+.labo-stage { overflow: auto; padding: 12px 16px; min-height: 0; }
+.labo-error { color: #b00020; white-space: pre-wrap; }
+
+.labo-bar { display: flex; align-items: center; justify-content: center; gap: 4px; border-top: 1px solid var(--labo-trait); padding: 0 8px; }
+.labo-letters { display: flex; gap: 2px; overflow-x: auto; }
+.labo-letter { position: relative; width: 44px; font-family: ui-monospace, monospace !important; border-radius: 6px; }
+.labo-letter.is-on { background: var(--labo-accent); color: #fff !important; }
+.labo-nav { width: 44px; display: grid; place-items: center; }
+
+@media (min-width: 769px) { .labo-bar { display: none; } }
+@media (max-width: 768px) {
+  .labo-body { grid-template-columns: 1fr; }
+  .labo-side { display: none; }
+  .labo-chips { display: flex; gap: 6px; overflow-x: auto; padding: 6px 10px; border-bottom: 1px solid var(--labo-trait); }
+  .labo-chip { padding: 0 12px; border: 1px solid var(--labo-trait) !important; border-radius: 22px; white-space: nowrap; }
+  .labo-chip.is-on { background: var(--labo-encre); color: #fff; }
+  .labo-game { max-width: 30vw; overflow: hidden; text-overflow: ellipsis; }
+}
+
+/* Accueil : le journal des changements, les sujets à trancher, l'index */
+.labo.is-home .labo-body { grid-template-columns: 1fr; }
+.labo.is-home .labo-side, .labo.is-home .labo-chips, .labo.is-home .labo-bar { display: none; }
+.labo-stage .labo-bloc { max-width: 760px; margin: 0 0 24px; }
+.labo-stage h2 { font-size: 15px; margin: 0 0 8px; letter-spacing: .04em; text-transform: uppercase; opacity: .7; }
+.labo-stage h3 { font-size: 15px; margin: 12px 0 4px; display: flex; gap: 8px; align-items: baseline; }
+.labo-stage h3 small { font-weight: 400; opacity: .6; }
+.labo-stage ul { margin: 0; padding-left: 18px; }
+.labo-stage li { display: flex; flex-wrap: wrap; align-items: center; column-gap: 8px; user-select: text; }
+.labo-aide { opacity: .7; margin: 0 0 12px; }
+.labo-lien { color: var(--labo-accent); text-decoration: underline; text-underline-offset: 2px; display: inline-flex; align-items: center; min-height: 44px; min-width: 44px; }
+.labo-lien.is-casse { color: #b00020; text-decoration: none; }
+.labo-genre, .labo-new { font: 11px ui-monospace, monospace; letter-spacing: .08em; text-transform: uppercase; padding: 1px 6px; border: 1px solid var(--labo-trait); border-radius: 4px; }
+.labo-new { margin: 0; border-color: var(--labo-accent); color: var(--labo-accent); }
+.labo-genre.is-nouveau { border-color: var(--labo-accent); color: var(--labo-accent); }
+.labo-genre.is-retire { text-decoration: line-through; opacity: .7; }
+.labo-version.is-new { border-left: 3px solid var(--labo-accent); padding-left: 12px; }
+.labo-index { margin-bottom: 8px; }
+
+/* Les points d'état (sujets, groupes) : la forme porte l'information, la couleur la confirme */
+.labo-point { flex: none; display: inline-block; width: 10px; height: 10px; margin-right: 8px; vertical-align: baseline; background: currentColor; }
+.labo-point.is-vert { color: #2f9e5a; border-radius: 50%; }
+.labo-point.is-rouge { color: #d6403a; border-radius: 1px; }
+.labo-point.is-orange { color: #e68a1f; clip-path: polygon(50% 0, 100% 100%, 0 100%); }
+.labo-head .labo-point { box-shadow: 0 0 0 1.5px #fff; }
+.labo-head .labo-point.is-orange { box-shadow: none; filter: drop-shadow(0 0 1px #fff); }
+.labo-topic-nom, .labo-chip, .labo-group { display: inline-flex; align-items: center; }
+.labo-topic-btn .labo-topic-nom { text-align: left; }
+.labo-stage h3 .labo-point { align-self: center; }

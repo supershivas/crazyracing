@@ -1,0 +1,39 @@
+# Publie le jeu sur GitHub Pages à chaque push sur main, APRÈS les tests :
+# publier un jeu dont les règles sont cassées coûte plus cher que ne pas
+# publier (section 19 des conventions). Dans les réglages du dépôt :
+# Settings → Pages → Source : « GitHub Actions ».
+name: Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Tests
+        run: node outils/test-run.mjs
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: .
+      - id: deployment
+        uses: actions/deploy-pages@v4
