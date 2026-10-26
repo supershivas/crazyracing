@@ -1,8 +1,8 @@
 // Le contenu modifiable par l'Atelier (section 17) : la version publiée dans
 // le dépôt (assets/design/*.json), plus les retouches de ce navigateur pas
 // encore publiées. Le jeu l'appelle au lancement, avant de dessiner.
-import { SPRITES } from './sprites-data.js?v=0.1.0';
-import { REGLAGES } from './data/reglages.js?v=0.1.0';
+import { SPRITES } from './sprites-data.js?v=0.2.0';
+import { REGLAGES } from './data/reglages.js?v=0.2.0';
 
 const BROUILLON = 'crazyracing:atelier';
 

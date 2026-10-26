@@ -132,10 +132,17 @@ export function verifierPiste(piste) {
     }
   }
   const croisements = croisPts.length;
+  // La grille s'étend derrière la ligne et le stand la longe : il faut une portion presque droite
+  let departMin = Infinity;
+  for (const p of pts) {
+    const sp = p.s > piste.longueur / 2 ? p.s - piste.longueur : p.s;
+    if (sp >= -130 && sp <= 70 && Math.abs(p.k) > 1e-6) departMin = Math.min(departMin, 1 / Math.abs(p.k));
+  }
   const problemes = [];
+  if (departMin < 90) problemes.push('la ligne de départ doit être sur une portion presque droite');
   if (rayonMin < largeur * 0.55) problemes.push(`virage trop serré (rayon ${rayonMin.toFixed(0)} px)`);
   if (piste.longueur < 600) problemes.push('circuit trop court');
   if (piste.longueur > 9000) problemes.push('circuit trop long');
   if (frolements > 0) problemes.push('deux tronçons se frôlent');
-  return { rayonMin, croisements, longueur: piste.longueur, problemes, ok: problemes.length === 0 };
+  return { rayonMin, departMin, croisements, longueur: piste.longueur, problemes, ok: problemes.length === 0 };
 }

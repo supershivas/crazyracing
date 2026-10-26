@@ -1,21 +1,23 @@
 // Le cycle de vie : écran titre → préparation → course → résultats ; réglages,
 // sauvegarde, mise à jour, debug. Les règles sont dans course.js, le dessin dans render.js.
-import { createPixelCanvas } from './lib/pixel-canvas.js?v=0.1.0';
-import { createLoop } from './lib/loop.js?v=0.1.0';
-import { createKeys, stopTypeahead } from './lib/keys.js?v=0.1.0';
-import { lockBrowserGestures } from './lib/pointer.js?v=0.1.0';
-import { createGamepad } from './lib/gamepad.js?v=0.1.0';
-import { createStore, autosave, pickJSONFile } from './lib/save.js?v=0.1.0';
-import { createAudio } from './lib/audio.js?v=0.1.0';
-import { startUpdateCheck, loadVersion, loadChangelog, downloadJSON } from './lib/app-update.js?v=0.1.0';
-import { ROLES } from './palette.js?v=0.1.0';
-import { nouvelleCourse, avancerCourse, grille, PNEUS } from './course.js?v=0.1.0';
-import { construirePiste } from './piste.js?v=0.1.0';
-import { creerDecor, creerVue, dessiner, dessinerCarte } from './render.js?v=0.1.0';
-import { chargerContenu } from './design-store.js?v=0.1.0';
-import { creerEntrees, creerTactile } from './entrees.js?v=0.1.0';
-import { majHud, message, feux, viderHud, temps, tempsPrecis } from './hud.js?v=0.1.0';
-import { CIRCUITS } from './data/circuits.js?v=0.1.0';
+import { createPixelCanvas } from './lib/pixel-canvas.js?v=0.2.0';
+import { createLoop } from './lib/loop.js?v=0.2.0';
+import { createKeys, stopTypeahead } from './lib/keys.js?v=0.2.0';
+import { lockBrowserGestures } from './lib/pointer.js?v=0.2.0';
+import { createGamepad } from './lib/gamepad.js?v=0.2.0';
+import { createStore, autosave, pickJSONFile } from './lib/save.js?v=0.2.0';
+import { createAudio } from './lib/audio.js?v=0.2.0';
+import { startUpdateCheck, loadVersion, loadChangelog, downloadJSON } from './lib/app-update.js?v=0.2.0';
+import { ROLES } from './palette.js?v=0.2.0';
+import { nouvelleCourse, avancerCourse, grille, PNEUS } from './course.js?v=0.2.0';
+import { construirePiste } from './piste.js?v=0.2.0';
+import { creerDecor, creerVue, dessiner, dessinerCarte } from './render.js?v=0.2.0';
+import { chargerContenu } from './design-store.js?v=0.2.0';
+import { creerEntrees, creerTactile } from './entrees.js?v=0.2.0';
+import { majHud, message, feux, viderHud, temps, tempsPrecis } from './hud.js?v=0.2.0';
+import { CIRCUITS } from './data/circuits.js?v=0.2.0';
+import { creerEditeur } from './editeur.js?v=0.2.0';
+import { circuitVersCode, codeVersCircuit } from './circuit-code.js?v=0.2.0';
 
 const JEU = 'crazyracing';
 const $ = id => document.getElementById(id);
@@ -62,6 +64,7 @@ stopTypeahead();
 // ─── Les circuits : fournis + ceux de l'éditeur ────────────────────────────
 const tousLesCircuits = () => [...CIRCUITS, ...(profil.circuits || [])];
 const circuitPar = id => tousLesCircuits().find(c => c.id === id) ?? CIRCUITS[0];
+const defDe = options => options.def ?? circuitPar(options.circuit);
 
 // ─── État de la course en cours ────────────────────────────────────────────
 let course = null;
@@ -89,9 +92,15 @@ function toast(texte) {
 function montrerTitre() {
   loop.pause();
   course = null;
+  editeur.fermer();
   $('titre').hidden = false;
   $('hud').hidden = true;
   $('m-course').focus();
+}
+
+// De la course ou des résultats : on revient où l'on était (l'éditeur si on essayait un circuit)
+function quitterCourse() {
+  if (derniereOptions?.retour === 'editeur' && brouillonEditeur) { course = null; $('hud').hidden = true; ouvrirEditeur(brouillonEditeur); } else montrerTitre();
 }
 
 function decorDe(def) {
@@ -107,7 +116,7 @@ function decorDe(def) {
 
 function lancer(options) {
   derniereOptions = options;
-  const def = circuitPar(options.circuit);
+  const def = defDe(options);
   const chrono = options.mode === 'chrono';
   fantome = chrono ? profil.records[def.id]?.fantome ?? null : null;
   const voitures = chrono
@@ -220,11 +229,11 @@ $('pause').onclick = pause;
 $('reprendre').onclick = () => { $('dialogue-pause').close(); };
 $('dialogue-pause').addEventListener('close', () => { if (enJeu()) loop.resume(); });
 $('recommencer').onclick = () => { $('dialogue-pause').close(); lancer(derniereOptions); };
-$('quitter').onclick = () => { $('dialogue-pause').close(); montrerTitre(); };
+$('quitter').onclick = () => { $('dialogue-pause').close(); quitterCourse(); };
 $('pause-reglages').onclick = () => $('dialogue-reglages').showModal();
 $('ouvrir-reglages').onclick = () => $('dialogue-reglages').showModal();
 $('res-rejouer').onclick = () => lancer(derniereOptions);
-$('res-menu').onclick = () => { $('dialogue-resultats').close(); montrerTitre(); };
+$('res-menu').onclick = () => { $('dialogue-resultats').close(); quitterCourse(); };
 $('bonus-case').onclick = () => entrees.declencherBonus();
 // Fenêtre quittée : pause (section 9)
 window.addEventListener('blur', pause);
@@ -303,18 +312,19 @@ function finir() {
   if (fini) return;
   fini = true;
   loop.pause();
-  const def = circuitPar(derniereOptions.circuit);
+  const def = defDe(derniereOptions);
   const rec = profil.records[def.id];
+  const essai = def.id === 'essai'; // un circuit de l'éditeur pas encore enregistré n'a pas de record
   let note = '';
   if (course.mode === 'chrono') {
-    if (course.meilleurTour != null && (!rec?.meilleur || course.meilleurTour < rec.meilleur)) {
+    if (!essai && course.meilleurTour != null && (!rec?.meilleur || course.meilleurTour < rec.meilleur)) {
       profil.records[def.id] = { meilleur: course.meilleurTour, fantome: { temps: course.meilleurTour, pts: course.fantomeNouveau } };
       note = 'Nouveau record du circuit ! Votre fantôme le rejouera.';
     }
   } else {
     const moi = course.classement.find(r => r.id === joueur.id);
     note = moi?.pos === 1 ? 'Victoire !' : moi?.pos <= 3 ? 'Sur le podium !' : '';
-    if (joueur.meilleur != null && (!rec?.meilleur || joueur.meilleur < rec.meilleur)) profil.records[def.id] = { ...rec, meilleur: joueur.meilleur };
+    if (!essai && joueur.meilleur != null && (!rec?.meilleur || joueur.meilleur < rec.meilleur)) profil.records[def.id] = { ...rec, meilleur: joueur.meilleur };
   }
   sauvegarder();
   $('res-titre').textContent = course.mode === 'chrono' ? 'Contre la montre' : 'Arrivée';
@@ -338,15 +348,95 @@ function finir() {
   $('res-rejouer').focus();
 }
 
+// ─── L'éditeur de circuits ─────────────────────────────────────────────────
+let brouillonEditeur = null;
+const ovale = () => [[300, 130], [560, 110], [820, 180], [880, 350], [760, 520], [480, 560], [210, 500], [130, 320]];
+const nouveauCircuit = () => ({ nom: 'Mon circuit', theme: 'prairie', largeur: 34, tours: 3, points: ovale() });
+
+const editeur = creerEditeur({
+  px, canvas: $('canvas'), racine: $('editeur'),
+  onTester: def => {
+    brouillonEditeur = structuredClone(editeur.circuit);
+    editeur.fermer();
+    lancer({ mode: 'chrono', def: { ...def, id: 'essai' }, circuit: 'essai', tours: 3, meteo: 'sec', pneu: 'slick', retour: 'editeur' });
+  },
+  onEnregistrer: def => {
+    const liste = profil.circuits;
+    const i = def.id && def.id !== 'perso' ? liste.findIndex(c => c.id === def.id) : -1;
+    if (i >= 0) {
+      if (JSON.stringify(liste[i].points) !== JSON.stringify(def.points) || liste[i].largeur !== def.largeur) delete profil.records[def.id]; // un autre tracé : l'ancien record ne vaut plus
+      liste[i] = def;
+    } else { def.id = `perso-${Date.now().toString(36)}`; liste.push(def); editeur.circuit.id = def.id; }
+    sauvegarder();
+    toast(`« ${def.nom} » enregistré : il est dans la liste des circuits`);
+  },
+  onSupprimer: def => {
+    const i = profil.circuits.findIndex(c => c.id === def.id);
+    if (i >= 0) { profil.circuits.splice(i, 1); delete profil.records[def.id]; sauvegarder(); toast('Circuit supprimé'); }
+    montrerTitre();
+  },
+  onCopier: def => montrerCode('Code du circuit', 'Envoyez ce code à un ami : il le colle dans l\'éditeur (Coller un code).', circuitVersCode(def)),
+  onColler: () => montrerCode('Coller un code', 'Collez ici le code d\'un circuit reçu (il commence par CR1.).', '', code => {
+    const def = codeVersCircuit(code); // lève une erreur lisible
+    editeur.ouvrir({ ...def, id: undefined });
+    toast(`« ${def.nom} » importé : à vous de jouer, puis enregistrez-le`);
+  }),
+  onQuitter: modifie => {
+    if (!modifie || confirm('Quitter sans enregistrer les changements ?')) montrerTitre();
+  },
+});
+function ouvrirEditeur(def) {
+  $('titre').hidden = true;
+  $('hud').hidden = true;
+  editeur.ouvrir(def);
+  loop.resume();
+}
+$('m-editeur').onclick = () => {
+  const liste = $('mes-circuits');
+  liste.replaceChildren(
+    el('button', { className: 'bouton', textContent: 'Nouveau circuit', onclick: () => { $('dialogue-circuits').close(); ouvrirEditeur(nouveauCircuit()); } }),
+    ...tousLesCircuits().map(def => el('button', {
+      className: 'bouton secondaire',
+      textContent: `${def.nom}${CIRCUITS.includes(def) ? ' (copier pour modifier)' : ''}`,
+      onclick: () => {
+        $('dialogue-circuits').close();
+        ouvrirEditeur(CIRCUITS.includes(def) ? { ...structuredClone(def), id: undefined, nom: `${def.nom} bis` } : structuredClone(def));
+      },
+    })),
+  );
+  $('dialogue-circuits').showModal();
+};
+// Un code de circuit, à copier ou à coller
+function montrerCode(titre, aide, texte, importer) {
+  $('code-titre').textContent = titre;
+  $('code-aide').textContent = aide;
+  const t = $('code-texte');
+  t.value = texte; t.readOnly = !importer;
+  $('code-ok').textContent = importer ? 'Importer' : 'Fermer';
+  $('code-copier').hidden = !!importer;
+  const d = $('dialogue-code');
+  $('code-ok').onclick = () => {
+    if (!importer) return d.close();
+    try { importer(t.value); d.close(); } catch (e) { $('code-aide').textContent = e.message; }
+  };
+  $('code-copier').onclick = async () => {
+    try { await navigator.clipboard.writeText(t.value); toast('Code copié'); } catch { t.select(); toast('Sélectionné : copiez-le avec Ctrl+C'); }
+  };
+  d.showModal();
+  t.focus(); t.select();
+}
+
 // ─── Boucle ────────────────────────────────────────────────────────────────
 const loop = createLoop({
   update(dt) {
+    if (editeur.actif) return;
     if (!course || course.phase === 'fin') return;
     const cmd = entrees.lire(dt);
     cmd.pneu = prochainPneu;
     traiter(avancerCourse(course, dt, { [joueur.id]: cmd }));
   },
   render() {
+    if (editeur.actif) { editeur.dessiner(px.ctx); return; }
     if (!course) { px.ctx.fillStyle = ROLES.fond; px.ctx.fillRect(0, 0, px.width, px.height); return; }
     dessiner(px.ctx, course, vue, px, decor, sprites, { suivre: joueur.id, fantome });
     majHud(course, joueur, { meilleurPerso: profil.records[course.def.id]?.meilleur, prochainPneu });
@@ -367,7 +457,7 @@ startUpdateCheck({
 
 // ─── Mode debug (section 18) : chargé seulement avec ?debug=1 ──────────────
 if (DEBUG) {
-  const { installDebug, seedFromUrl } = await import('./lib/debug.js?v=0.1.0');
+  const { installDebug, seedFromUrl } = await import('./lib/debug.js?v=0.2.0');
   window.__seed = seedFromUrl() ?? undefined;
   const placer = p => {
     if (!course) return;

@@ -2,9 +2,9 @@
 // Tout est en pixels logiques ; pixel-canvas.js s'occupe de l'échelle entière.
 // Le circuit est peint une fois, pixel par pixel, dans un canvas aussi grand que
 // le monde (voir creerDecor) ; chaque image n'en recopie que la partie visible.
-import { spriteCanvas } from './lib/sprites.js?v=0.1.0';
-import { hash2 } from './lib/rng.js?v=0.1.0';
-import { PALETTE, LIVREES } from './palette.js?v=0.1.0';
+import { spriteCanvas } from './lib/sprites.js?v=0.2.0';
+import { hash2 } from './lib/rng.js?v=0.2.0';
+import { PALETTE, LIVREES } from './palette.js?v=0.2.0';
 
 const THEMES = {
   port: { sol: 'h', grain: 'i', deco: ['conteneur', 'conteneur2', 'rocher'], densite: 0.00045, asphalte: 'k', bordure: ['r', 'w'] },

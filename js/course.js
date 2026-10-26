@@ -1,11 +1,11 @@
 // Les règles d'une course : grille, feux, tours, météo, stands, bonus, limites
 // de piste, pénalités, classement. Du JS pur, sans DOM, sans hasard ni horloge
 // du navigateur (sections 10 et 12) : même graine, mêmes commandes → même course.
-import { createRng } from './lib/rng.js?v=0.1.0';
-import { construirePiste, projeter, pointA } from './piste.js?v=0.1.0';
-import { nouvelleVoiture, pasVoiture, contreMur, contacts, adherence } from './voiture.js?v=0.1.0';
-import { piloteIA } from './ia.js?v=0.1.0';
-import { REGLAGES } from './data/reglages.js?v=0.1.0';
+import { createRng } from './lib/rng.js?v=0.2.0';
+import { construirePiste, projeter, pointA } from './piste.js?v=0.2.0';
+import { nouvelleVoiture, pasVoiture, contreMur, contacts, adherence } from './voiture.js?v=0.2.0';
+import { piloteIA } from './ia.js?v=0.2.0';
+import { REGLAGES } from './data/reglages.js?v=0.2.0';
 
 export const METEOS = ['sec', 'humide', 'pluie', 'variable'];
 export const PNEUS = ['slick', 'inter', 'pluie'];

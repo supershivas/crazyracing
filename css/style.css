@@ -129,3 +129,24 @@ legend { padding: 0; margin-bottom: 4px; font-size: 13px; opacity: .85; }
 .classement tr.moi td { background: var(--jeu-asphalte); }
 .classement td:last-child, .classement th:last-child { text-align: right; }
 .res-note { margin: 0 0 var(--pas); font-size: 13px; color: var(--jeu-accent); min-height: 1.3em; }
+
+/* L'éditeur de circuits */
+.editeur { position: absolute; inset: 0; pointer-events: none; }
+.editeur[hidden] { display: none; }
+.editeur > * { pointer-events: none; }
+.ed-barre, .ed-bas { position: absolute; left: 0; right: 0; display: flex; flex-wrap: wrap; align-items: center; gap: var(--pas); padding: var(--pas); background: var(--jeu-fond); border-color: var(--jeu-ombre); border-style: solid; border-width: 0; pointer-events: auto; }
+.ed-haut { top: 0; border-bottom-width: 2px; }
+.ed-bas { bottom: 0; border-top-width: 2px; flex-direction: column; align-items: stretch; }
+.ed-barre input[type="text"], .ed-barre select { background: var(--jeu-ombre); color: var(--jeu-encre); border: 0; border-bottom: 2px solid var(--jeu-encre); padding: 0 8px; min-height: 40px; font: inherit; font-size: 16px; }
+.ed-barre input[type="text"] { width: 12em; max-width: 100%; }
+.ed-largeur { min-width: 8em; }
+.ed-largeur output { min-width: 2.5em; }
+.ed-largeur button, .ed-zoom button { min-width: 40px; min-height: 40px; background: var(--jeu-ombre); border: 0; color: var(--jeu-encre); font-size: 20px; }
+.ed-zoom { display: flex; gap: 2px; margin-left: auto; }
+.ed-modes label { padding: 0 12px; display: grid; place-items: center; }
+.ed-etat { margin: 0; font-size: 13px; min-height: 1.4em; }
+.ed-etat.mauvais { color: #ef7d57; }
+.ed-etat.bon { color: #a7f070; }
+.ed-actions { display: flex; flex-wrap: wrap; gap: var(--pas); }
+.ed-actions .bouton { flex: 1 1 auto; min-height: 40px; font-size: 14px; }
+dialog textarea { width: min(80vw, 480px); background: var(--jeu-ombre); color: var(--jeu-encre); border: 0; border-bottom: 2px solid var(--jeu-encre); font: 12px/1.4 var(--jeu-police); padding: 8px; resize: vertical; -webkit-user-select: text; user-select: text; word-break: break-all; margin-bottom: var(--pas); }

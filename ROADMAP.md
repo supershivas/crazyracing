@@ -17,10 +17,6 @@ Statuts : **à l'étude** · **validé** (Jérôme a tranché) · **en cours** �
 - [x] Des adversaires, des limites de piste, un classement
 - [ ] Le critère de validation, mesuré (voir DESIGN.md)
 
-### Éditeur de circuits
-
-**Statut** : validé (Jérôme, demande initiale)
-
 ### Jeu en ligne sur le même réseau (WebRTC, code à échanger)
 
 **Statut** : validé (Jérôme, demande initiale)

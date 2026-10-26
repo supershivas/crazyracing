@@ -6,7 +6,7 @@
    puis import PNG (ramené à la palette par `imageToRows` de sprites.js).
 
    Module ES sans dépendance (l'aperçu est dessiné ici, sans sprites.js) :
-     import { mountPixelEditor } from './lib/pixel-editor.js'
+     import { mountPixelEditor } from './lib/pixel-editor.js?v=0.2.0'
      const ed = mountPixelEditor(document.getElementById('editeur'), {
        rows: HERO,                  // ['..kk..', ...]
        palette: PALETTE,            // { k: '#1b1f3b', w: '#e8eef7', ... }

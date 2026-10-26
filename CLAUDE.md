@@ -91,6 +91,7 @@ Sweetie 16 (GrafxKid), en entier ; `x` et `z` sont les deux couleurs de livrée 
 - `js/course.js` — les règles d'une course : grille, feux, tours, météo, stands, bonus,
   limites de piste, pénalités, classement. Pur, sans hasard hors `rng`.
 - `js/render.js` — le dessin ; ne modifie jamais l'état de la course.
+- `js/editeur.js` — l'éditeur de circuits (points de contrôle, vérification en direct) ; `js/circuit-code.js` — le code de partage (pur, assaini).
 - `js/hud.js`, `js/entrees.js` — le HUD en DOM ; clavier, manette et doigt → commande.
 - `js/palette.js`, `js/sprites-data.js`, `js/data/` (réglages, circuits) — la donnée.
 - `js/design-store.js` — le contenu publié par l'atelier (`assets/design/`)

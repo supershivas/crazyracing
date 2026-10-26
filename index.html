@@ -8,8 +8,8 @@
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="js/lib/game.css?v=0.1.0">
-<link rel="stylesheet" href="css/style.css?v=0.1.0">
+<link rel="stylesheet" href="js/lib/game.css?v=0.2.0">
+<link rel="stylesheet" href="css/style.css?v=0.2.0">
 </head>
 <body>
 <div class="jeu-ecran" id="ecran">
@@ -61,11 +61,38 @@
       <button class="bouton" id="m-course">Course</button>
       <button class="bouton" id="m-chrono">Contre la montre</button>
       <button class="bouton" id="m-ligne" hidden>En ligne</button>
-      <button class="bouton" id="m-editeur" hidden>Éditeur de circuits</button>
+      <button class="bouton" id="m-editeur">Éditeur de circuits</button>
     </nav>
     <button class="icone titre-reglages" id="ouvrir-reglages" aria-label="Réglages">
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M10.3 4.3c.4-1.8 2.9-1.8 3.4 0a1.7 1.7 0 0 0 2.6 1.1c1.5-.9 3.3.8 2.4 2.4a1.7 1.7 0 0 0 1 2.5c1.8.5 1.8 3 0 3.4a1.7 1.7 0 0 0-1 2.6c.9 1.5-.9 3.3-2.4 2.4a1.7 1.7 0 0 0-2.6 1c-.5 1.8-3 1.8-3.4 0a1.7 1.7 0 0 0-2.5-1c-1.6.9-3.3-.9-2.4-2.4a1.7 1.7 0 0 0-1.1-2.6c-1.8-.4-1.8-2.9 0-3.4a1.7 1.7 0 0 0 1.1-2.5c-.9-1.6.8-3.3 2.4-2.4 1 .6 2.3.1 2.5-1.1z"/><circle cx="12" cy="12" r="3"/></svg>
     </button>
+  </section>
+
+  <!-- L'éditeur de circuits : un panneau par-dessus le canvas -->
+  <section class="editeur" id="editeur" hidden>
+    <div class="ed-barre ed-haut safe-top">
+      <input id="ed-nom" type="text" maxlength="24" aria-label="Nom du circuit" autocomplete="off">
+      <select id="ed-theme" aria-label="Décor"><option value="prairie">Prairie</option><option value="dunes">Dunes</option><option value="port">Port</option></select>
+      <div class="pas ed-largeur" role="group" aria-label="Largeur"><button type="button" id="ed-moins" aria-label="Piste plus étroite">−</button><output id="ed-largeur">34</output><button type="button" id="ed-plus" aria-label="Piste plus large">+</button></div>
+      <div class="segment ed-modes" role="radiogroup" aria-label="Outil">
+        <label><input type="radio" name="ed-mode" value="deplacer" checked>Déplacer</label>
+        <label><input type="radio" name="ed-mode" value="ajouter">Ajouter</label>
+        <label><input type="radio" name="ed-mode" value="supprimer">Retirer</label>
+        <label><input type="radio" name="ed-mode" value="depart">Départ</label>
+      </div>
+      <div class="ed-zoom"><button type="button" id="ed-zoom-moins" aria-label="Dézoomer">−</button><button type="button" id="ed-zoom-plus" aria-label="Zoomer">+</button></div>
+    </div>
+    <div class="ed-bas safe-bottom">
+      <p class="ed-etat" id="ed-etat" aria-live="polite"></p>
+      <div class="ed-actions">
+        <button class="bouton" id="ed-tester">Essayer</button>
+        <button class="bouton" id="ed-enregistrer">Enregistrer</button>
+        <button class="bouton secondaire" id="ed-copier">Copier le code</button>
+        <button class="bouton secondaire" id="ed-coller">Coller un code</button>
+        <button class="bouton secondaire" id="ed-supprimer">Supprimer</button>
+        <button class="bouton secondaire" id="ed-quitter">Quitter</button>
+      </div>
+    </div>
   </section>
 </div>
 
@@ -89,6 +116,22 @@
   <div class="menu menu-ligne">
     <button class="bouton" id="res-rejouer">Rejouer</button>
     <button class="bouton secondaire" id="res-menu">Menu</button>
+  </div>
+</dialog>
+
+<dialog id="dialogue-circuits" aria-label="Mes circuits">
+  <h2>Éditeur de circuits</h2>
+  <div class="menu" id="mes-circuits"></div>
+  <form method="dialog"><button class="bouton secondaire">Fermer</button></form>
+</dialog>
+
+<dialog id="dialogue-code" aria-label="Code de circuit">
+  <h2 id="code-titre">Code du circuit</h2>
+  <p class="aide" id="code-aide"></p>
+  <textarea id="code-texte" rows="5" spellcheck="false" autocomplete="off"></textarea>
+  <div class="menu menu-ligne">
+    <button class="bouton" id="code-ok">Fermer</button>
+    <button class="bouton secondaire" id="code-copier">Copier</button>
   </div>
 </dialog>
 
@@ -123,6 +166,6 @@
 </dialog>
 
 <div class="jeu-toast" id="toast" role="status" hidden></div>
-<script type="module" src="js/main.js?v=0.1.0"></script>
+<script type="module" src="js/main.js?v=0.2.0"></script>
 </body>
 </html>

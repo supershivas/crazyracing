@@ -1,7 +1,7 @@
 {
-  "version": "0.1.0",
+  "version": "0.2.0",
   "date": "2026-10-26",
   "changes": [
-    "Course solo, contre la montre, 3 circuits, pneus, météo, stands, bonus"
+    "Éditeur de circuits : déplacer, ajouter, retirer des points, choisir le départ, essayer, enregistrer, partager par un code"
   ]
 }

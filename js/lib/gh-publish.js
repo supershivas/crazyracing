@@ -11,7 +11,7 @@
    n'est jamais exporté.
 
    Module ES sans dépendance :
-     import { createPublisher, TOKEN_URL } from './lib/gh-publish.js'
+     import { createPublisher, TOKEN_URL } from './lib/gh-publish.js?v=0.2.0'
      const pub = createPublisher({ repo: 'supershivas/kingvi', tokenKey: 'kingvi:gh-token' })
      pub.setToken(collé)          // pub.getToken(), pub.hasToken
      const texts = await pub.readJSON('assets/design/texts.json')   // null si absent

@@ -2,17 +2,17 @@
 // Chaque sujet utilise les mêmes modules que le jeu : ce qu'on voit ici est
 // ce que le jeu dessinera. Ajouter un sujet ou une variante = ajouter une
 // entrée dans GROUPES.
-import { mountLabo } from './lib/labo-shell.js?v=0.1.0';
-import { loadVersion } from './lib/app-update.js?v=0.1.0';
-import { JOURNAL } from './labo-journal.js?v=0.1.0';
-import { spriteCanvas, sheet, spriteToPNG, paletteToGPL, paletteToHex } from './lib/sprites.js?v=0.1.0';
-import { createAudio } from './lib/audio.js?v=0.1.0';
-import { PALETTE, ROLES } from './palette.js?v=0.1.0';
-import { chargerContenu } from './design-store.js?v=0.1.0';
-import { nouvelleCourse, avancerCourse, grille } from './course.js?v=0.1.0';
-import { construirePiste } from './piste.js?v=0.1.0';
-import { creerDecor, creerVue, dessiner } from './render.js?v=0.1.0';
-import { CIRCUITS } from './data/circuits.js?v=0.1.0';
+import { mountLabo } from './lib/labo-shell.js?v=0.2.0';
+import { loadVersion } from './lib/app-update.js?v=0.2.0';
+import { JOURNAL } from './labo-journal.js?v=0.2.0';
+import { spriteCanvas, sheet, spriteToPNG, paletteToGPL, paletteToHex } from './lib/sprites.js?v=0.2.0';
+import { createAudio } from './lib/audio.js?v=0.2.0';
+import { PALETTE, ROLES } from './palette.js?v=0.2.0';
+import { chargerContenu } from './design-store.js?v=0.2.0';
+import { nouvelleCourse, avancerCourse, grille } from './course.js?v=0.2.0';
+import { construirePiste } from './piste.js?v=0.2.0';
+import { creerDecor, creerVue, dessiner } from './render.js?v=0.2.0';
+import { CIRCUITS } from './data/circuits.js?v=0.2.0';
 
 document.documentElement.style.setProperty('--jeu-accent', ROLES.accent);
 const NOM = document.title.replace(/^Labo — /, ''); // le nom vient de la page (une apostrophe ne casse rien)

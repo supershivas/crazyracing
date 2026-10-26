@@ -5,6 +5,7 @@ import { REGLAGES } from '../js/data/reglages.js';
 import { construirePiste, verifierPiste, projeter, pointA } from '../js/piste.js';
 import { nouvelleVoiture, pasVoiture, adherence } from '../js/voiture.js';
 import { nouvelleCourse, avancerCourse, grille, eauCible } from '../js/course.js';
+import { circuitVersCode, codeVersCircuit, normaliserCircuit } from '../js/circuit-code.js';
 import { SPRITES } from '../js/sprites-data.js';
 import { PALETTE } from '../js/palette.js';
 import { validateSprite } from '../js/lib/sprites.js';
@@ -194,4 +195,27 @@ test('aucun hasard ni horloge dans les règles', () => {
 group('dessins');
 test('chaque sprite est dans la palette', () => {
   for (const [nom, rows] of Object.entries(SPRITES)) assert.deepEqual(validateSprite(rows, PALETTE), [], nom);
+});
+
+group('codes de circuit');
+test('un circuit fait l\'aller-retour par son code', () => {
+  for (const def of CIRCUITS) {
+    const code = circuitVersCode(def);
+    assert.ok(code.startsWith('CR1.') && code.length < 700, `${code.length} car.`);
+    const b = codeVersCircuit(code);
+    assert.deepEqual(b.points, def.points);
+    assert.equal(b.nom, def.nom); assert.equal(b.largeur, def.largeur); assert.equal(b.theme, def.theme);
+  }
+});
+test('un code abîmé ou hostile est refusé ou assaini', () => {
+  assert.throws(() => codeVersCircuit('bonjour'));
+  assert.throws(() => codeVersCircuit('CR1.@@@'));
+  assert.throws(() => normaliserCircuit({ points: [[0, 0], [1, 1]] }));
+  assert.throws(() => normaliserCircuit({ points: Array.from({ length: 200 }, () => [0, 0]) }));
+  assert.throws(() => normaliserCircuit({ points: [[0, 0], [1, NaN], [2, 2], [3, 3]] }));
+  const c = normaliserCircuit({ nom: '<img src=x onerror=1>', theme: 'x', largeur: 9999, points: [[1e9, -1e9], [0, 0], [10, 10], [20, 0]] });
+  assert.ok(!/[<>]/.test(c.nom));
+  assert.equal(c.theme, 'prairie');
+  assert.equal(c.largeur, 60);
+  assert.deepEqual(c.points[0], [4000, -4000]);
 });
