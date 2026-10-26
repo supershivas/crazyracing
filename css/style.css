@@ -159,5 +159,19 @@ dialog textarea { width: min(80vw, 480px); background: var(--jeu-ombre); color: 
 .ligne-etat { min-height: 1.4em; font-size: 13px; color: var(--jeu-accent); margin: 0 0 var(--pas); }
 [hidden] { display: none !important; }
 .tactile-g { margin-left: 168px; }
-.tactile-d { margin-right: 150px; }
+.tactile-d { margin-right: 190px; }
+.hud:has(.tactile:not([hidden])) #pit-btn { display: none; }
 @media (max-height: 460px) { .tactile { bottom: calc(var(--pas) * 7); } .tactile button { width: 60px; height: 60px; } }
+
+/* La 3D : le canvas de la course remplit l'écran ; l'éditeur garde son canvas 2D */
+.rendu3d { position: absolute; inset: 0; width: 100%; height: 100%; display: block; touch-action: none; }
+.sillage { width: 100%; max-width: 150px; text-shadow: none; }
+.sillage small { font-size: 11px; opacity: .85; }
+.sillage .jauge i { background: #73eff7; width: 0; transition: width .12s linear; }
+.sillage .jauge i.plein { background: #f4f4f4; box-shadow: 0 0 6px #73eff7; }
+.lignes { display: flex; gap: 4px; margin-top: 4px; }
+.lignes i { width: 22px; height: 6px; background: var(--jeu-ombre); }
+.lignes i.actif { background: var(--jeu-encre); }
+#pit-btn[aria-pressed="true"] { border-color: var(--jeu-accent); background: var(--jeu-accent); color: var(--jeu-fond); }
+#hud-stand { color: #ffcd75; }
+select { background: var(--jeu-ombre); color: var(--jeu-encre); border: 0; border-bottom: 2px solid var(--jeu-encre); padding: 0 8px; min-height: 40px; font: inherit; font-size: 16px; }

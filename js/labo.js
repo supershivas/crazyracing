@@ -2,21 +2,20 @@
 // Chaque sujet utilise les mêmes modules que le jeu : ce qu'on voit ici est
 // ce que le jeu dessinera. Ajouter un sujet ou une variante = ajouter une
 // entrée dans GROUPES.
-import { mountLabo } from './lib/labo-shell.js?v=0.3.0';
-import { loadVersion } from './lib/app-update.js?v=0.3.0';
-import { JOURNAL } from './labo-journal.js?v=0.3.0';
-import { spriteCanvas, sheet, spriteToPNG, paletteToGPL, paletteToHex } from './lib/sprites.js?v=0.3.0';
-import { createAudio } from './lib/audio.js?v=0.3.0';
-import { PALETTE, ROLES } from './palette.js?v=0.3.0';
-import { chargerContenu } from './design-store.js?v=0.3.0';
-import { nouvelleCourse, avancerCourse, grille } from './course.js?v=0.3.0';
-import { construirePiste } from './piste.js?v=0.3.0';
-import { creerDecor, creerVue, dessiner } from './render.js?v=0.3.0';
-import { CIRCUITS } from './data/circuits.js?v=0.3.0';
+import { mountLabo } from './lib/labo-shell.js?v=0.4.0';
+import { loadVersion } from './lib/app-update.js?v=0.4.0';
+import { JOURNAL } from './labo-journal.js?v=0.4.0';
+import { paletteToGPL, paletteToHex } from './lib/sprites.js?v=0.4.0';
+import { createAudio } from './lib/audio.js?v=0.4.0';
+import { PALETTE, ROLES } from './palette.js?v=0.4.0';
+import { chargerContenu } from './design-store.js?v=0.4.0';
+import { nouvelleCourse, avancerCourse, grille } from './course.js?v=0.4.0';
+import { creerRendu3D } from './render3d.js?v=0.4.0';
+import { CIRCUITS } from './data/circuits.js?v=0.4.0';
 
 document.documentElement.style.setProperty('--jeu-accent', ROLES.accent);
 const NOM = document.title.replace(/^Labo — /, ''); // le nom vient de la page (une apostrophe ne casse rien)
-const { sprites, reglages } = await chargerContenu();
+const { reglages } = await chargerContenu();
 const audio = createAudio();
 const VERSION = (await loadVersion()) || '';
 
@@ -30,45 +29,33 @@ const telecharger = (blob, nom) => {
   document.body.append(a); a.click(); a.remove();
 };
 
-// La planche d'échelle : tout se mesure au héros (section 7)
-function planche(stage, facteur) {
-  const p = el('div', { className: 'planche' });
-  for (const [nom, rows] of Object.entries(sprites)) {
-    p.append(el('figure', {}, spriteCanvas(rows, PALETTE, { scale: facteur }), el('figcaption', { textContent: `${nom} ${rows[0].length}×${rows.length}` })));
-  }
-  stage.append(p);
-}
-
-// Une démo vivante du jeu : des voitures de l'ordinateur tournent sur un circuit,
-// avec des réglages ou une météo modifiés (variantes de réglage)
-function demo(stage, { reglages: modif = {}, meteo = 'sec', circuit = 'port' } = {}) {
+// Une démo vivante du jeu en 3D : des voitures de l'ordinateur tournent sur un circuit,
+// avec une heure, une météo ou des réglages modifiés (variantes de réglage)
+function demo(stage, { reglages: modif = {}, meteo = 'sec', circuit = 'port', heure = 'jour', tours = 99 } = {}) {
   const r = structuredClone(reglages);
   for (const [k, v] of Object.entries(modif)) Object.assign(r[k], v);
   const def = CIRCUITS.find(c => c.id === circuit);
-  const ecran = { width: 240, height: 135 };
-  const cv = el('canvas', { width: ecran.width, height: ecran.height });
-  cv.style.cssText = 'width:720px;max-width:100%;image-rendering:pixelated';
+  const cv = el('canvas');
+  cv.style.cssText = 'width:min(100%,860px);aspect-ratio:16/9;display:block';
   stage.append(cv);
-  const ctx = cv.getContext('2d');
-  const c = nouvelleCourse(def, { tours: 99, meteo, voitures: grille(5).map(v => ({ ...v, humain: false })), graine: 7, bonus: true, R: r });
-  const decor = creerDecor(construirePiste(def), def, sprites, r);
-  const vue = creerVue();
-  let raf;
+  const rendu = creerRendu3D(cv, { qualite: new URLSearchParams(location.search).get('q') ?? 'moyenne', heure });
+  rendu.redimensionner(860, 484, 1);
+  const c = nouvelleCourse(def, { tours, meteo, voitures: grille(5).map(v => ({ ...v, humain: false })), graine: 7, bonus: true, R: r });
+  rendu.charger(c, def, r);
+  let raf, dernier = performance.now();
   const boucle = () => {
-    avancerCourse(c, 1 / 60, {});
-    dessiner(ctx, c, vue, ecran, decor, sprites, { suivre: 'ia1' });
+    const now = performance.now();
+    const dt = Math.max(0, Math.min(0.05, (now - dernier) / 1000)); dernier = now;
+    avancerCourse(c, dt, {});
+    rendu.dessiner(dt, 'ia1', { vue: 'incline', etiquettes: false, guides: false });
     raf = requestAnimationFrame(boucle);
   };
-  boucle();
-  return () => cancelAnimationFrame(raf);
+  raf = requestAnimationFrame(boucle);
+  return () => { cancelAnimationFrame(raf); rendu.liberer(); };
 }
 
 const GROUPES = [
   { id: 'dessin', title: 'Dessin', topics: [
-    { id: 'echelle', title: 'Échelle', variants: [
-      { title: 'Taille réelle ×4', note: 'La voiture, les icônes et le décor, côte à côte.', status: 'actuelle', render: s => planche(s, 4) },
-      { title: 'Taille réelle ×1', note: 'Ce que voit un joueur sur un écran sans agrandissement.', render: s => planche(s, 1) },
-    ] },
     { id: 'palette', title: 'Palette', variants: [
       { title: 'Nuancier', note: 'Les couleurs du jeu, et rien d\'autre.', status: 'actuelle', render: s => {
         s.append(el('div', { className: 'nuancier' }, ...Object.entries(PALETTE).map(([k, hex]) => {
@@ -89,22 +76,18 @@ const GROUPES = [
         s.append(t);
       } },
     ] },
-    { id: 'sprites', title: 'Sprites', variants: [
-      { title: 'Planche', note: 'Tout ce que le jeu peint, à exporter pour le reprendre dans un éditeur.', status: 'actuelle', render: s => {
-        const c = sheet(Object.values(sprites), PALETTE, { scale: 6, gap: 2 });
-        c.style.imageRendering = 'pixelated';
-        s.append(c, el('p'));
-        for (const [nom, rows] of Object.entries(sprites)) {
-          s.append(el('button', { className: 'essai', textContent: `${nom}.png`, onclick: async () => telecharger(await spriteToPNG(rows, PALETTE, 1), `${nom}.png`) }));
-        }
-      } },
-    ] },
   ] },
   { id: 'jeu', title: 'Jeu', topics: [
-    { id: 'adherence', title: 'Adhérence des pneus', variants: [
-      { title: `${reglages.voiture.adherence} px/s²`, note: 'L\'adhérence actuelle : on glisse en bout de virage.', status: 'actuelle', render: s => demo(s) },
-      { title: '420 px/s²', note: 'Les voitures tiennent mieux : la course devient une affaire de freinage.', render: s => demo(s, { reglages: { voiture: { adherence: 420 } } }) },
-      { title: '240 px/s²', note: 'Plus de glisse, des erreurs, des tête-à-queue.', render: s => demo(s, { reglages: { voiture: { adherence: 240 } } }) },
+    { id: 'lumiere', title: 'Lumière', variants: [
+      { title: 'Jour', note: 'Soleil haut, ombres nettes : la référence.', status: 'actuelle', render: s => demo(s) },
+      { title: 'Soir', note: 'Soleil bas et orangé, ombres longues.', render: s => demo(s, { heure: 'soir', circuit: 'dunes' }) },
+      { title: 'Nuit', note: 'Phares des voitures, lampadaires les plus proches, bloom.', render: s => demo(s, { heure: 'nuit', circuit: 'huit' }) },
+      { title: 'Nuit sous la pluie', note: 'L\'asphalte mouillé reflète les lumières ; la trace sèche reste mate.', render: s => demo(s, { heure: 'nuit', meteo: 'pluie' }) },
+    ] },
+    { id: 'sillage', title: 'Aspiration', variants: [
+      { title: `+${Math.round(reglages.sillage.gain * 100)} % de vitesse`, note: 'Une voiture collée à celle de devant, sur sa ligne, gagne en vitesse de pointe.', status: 'actuelle', render: s => demo(s) },
+      { title: '+30 % de vitesse', note: 'L\'aspiration devient décisive : le peloton s\'étire moins, les dépassements arrivent plus tôt.', render: s => demo(s, { reglages: { sillage: { gain: 0.3 } } }) },
+      { title: 'Aucune', note: 'Sans aspiration : la course se joue sur les lignes et les pneus.', render: s => demo(s, { reglages: { sillage: { gain: 0, gainAcc: 0 } } }) },
     ] },
     { id: 'meteo', title: 'Météo', variants: [
       { title: 'Sec', note: 'La piste de référence.', status: 'actuelle', render: s => demo(s) },

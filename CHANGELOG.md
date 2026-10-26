@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.0 — 2026-10-26
+- Le jeu passe en 3D (three.js) : lumière dynamique (soleil et ombres, lampadaires, phares, pluie, bloom), jour, soir et nuit
+- On ne conduit plus : les voitures roulent seules sur trois lignes ; on choisit sa ligne, l'aspiration, les pneus, l'arrêt au stand, les bonus
+- L'aspiration (sillage) donne de la vitesse derrière une voiture ; l'air sale coûte de l'adhérence dans les virages
+- Seuls les événements sortent de piste : tête-à-queue, crevaison, débris posés sur une ligne
+- Retirés : volant, glisse, limites de piste et pénalités, collisions, pilote automatique, rendu 2D en pixels
+
 ## 0.3.0 — 2026-10-26
 - Course en ligne sur le même réseau : l'hôte crée un code, l'invité le colle et renvoie le sien ; aucun serveur (WebRTC)
 - L'hôte fait tourner la course, l'invité conduit et voit les voitures de l'ordinateur ; la voiture d'un joueur qui part est reprise par l'ordinateur

@@ -65,7 +65,7 @@ export const reseauDisponible = () => typeof RTCPeerConnection !== 'undefined' &
 export async function creerHote() {
   const pc = new RTCPeerConnection({ iceServers: [] });
   const lien = lienDepuis(pc);
-  lien.brancher(pc.createDataChannel('course', { ordered: false, maxRetransmits: 0 }));
+  lien.brancher(pc.createDataChannel('course')); // fiable et ordonné : les choix du joueur ne doivent pas se perdre
   await pc.setLocalDescription(await pc.createOffer());
   await attendreCandidats(pc);
   lien.code = PREFIXE_OFFRE + versB64(await comprimer(alleger(pc.localDescription.sdp)));

@@ -2,9 +2,9 @@
 // tracé (une spline fermée) se redessine et se vérifie à chaque geste. Le premier
 // point est la ligne de départ. Le circuit se joue tout de suite (« Essayer »),
 // s'enregistre dans ce navigateur et se partage par un code (circuit-code.js).
-import { construirePiste, verifierPiste, projeter } from './piste.js?v=0.3.0';
-import { PALETTE } from './palette.js?v=0.3.0';
-import { normaliserCircuit } from './circuit-code.js?v=0.3.0';
+import { construirePiste, verifierPiste, projeter } from './piste.js?v=0.4.0';
+import { PALETTE } from './palette.js?v=0.4.0';
+import { normaliserCircuit } from './circuit-code.js?v=0.4.0';
 
 const SOLS = { port: 'h', dunes: 'y', prairie: 'v' };
 const rotation = (pts, k) => [...pts.slice(k), ...pts.slice(0, k)];

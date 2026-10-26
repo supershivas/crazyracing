@@ -1,7 +1,6 @@
 // Configuration de node outils/lisibilite.mjs (voir l'en-tête de l'outil).
 // Une paire de couleurs s'ajoute le jour où on la dessine.
 import { PALETTE } from './js/palette.js';
-import { SPRITES } from './js/sprites-data.js';
 
 export default {
   palette: PALETTE,
@@ -13,6 +12,6 @@ export default {
     { avant: 'y', fond: 'k', role: 'signe', ou: 'bonus et box des stands' },
     { avant: 'o', fond: 'n', role: 'signe', ou: 'pénalités' },
   ],
-  groupes: { voiture: { voiture: SPRITES.voiture }, icones: { turbo: SPRITES.ic_turbo, pilote: SPRITES.ic_pilote, bouclier: SPRITES.ic_bouclier, gomme: SPRITES.ic_gomme } },
+  groupes: {},
   poses: [],
 };

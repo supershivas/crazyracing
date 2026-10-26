@@ -1,9 +1,9 @@
 // Le HUD en DOM : lit la course, n'écrit que ce qui a changé.
-import { eauCible } from './course.js?v=0.3.0';
+import { eauCible } from './course.js?v=0.4.0';
 
 const $ = id => document.getElementById(id);
 const NOMS_PNEU = { slick: 'Slick', inter: 'Inter', pluie: 'Pluie' };
-const NOMS_BONUS = { turbo: 'Turbo', pilote: 'Auto', bouclier: 'Bouclier' };
+const NOMS_BONUS = { turbo: 'Turbo', bouclier: 'Bouclier', sillage: 'Sillage' };
 const cache = new Map();
 const poser = (id, texte) => { if (cache.get(id) !== texte) { cache.set(id, texte); $(id).textContent = texte; } };
 
@@ -23,14 +23,12 @@ export function viderHud() { cache.clear(); }
 export function majHud(c, v, { meilleurPerso, prochainPneu } = {}) {
   const course = c.mode === 'course';
   document.querySelector('.hud-course').style.visibility = course ? 'visible' : 'hidden';
-  poser('hud-pos', course ? `${v.pos ?? 1}` : '');
-  if (course) $('hud-pos').innerHTML = `${v.pos ?? 1}<small>/${c.voitures.length}</small>`;
+  if (course) { const k = `${v.pos ?? 1}/${c.voitures.length}`; if (cache.get('pos') !== k) { cache.set('pos', k); $('hud-pos').innerHTML = `${v.pos ?? 1}<small>/${c.voitures.length}</small>`; } }
   poser('hud-tour', `Tour ${Math.min(Math.max(v.tour + 1, 1), c.tours)}/${c.tours}`);
-  const tCourse = v.tour >= 0 || c.mode === 'course' ? Math.max(0, c.t) : 0;
-  poser('hud-temps', temps(v.fini ? v.tempsFin : tCourse));
+  poser('hud-temps', temps(v.fini ? v.tempsFin : Math.max(0, c.t)));
   const dernier = v.tours.length ? v.tours[v.tours.length - 1] : null;
   poser('hud-tours', dernier != null ? `Dernier ${temps(dernier)} · Meilleur ${temps(v.meilleur)}${meilleurPerso ? ` · Record ${temps(meilleurPerso)}` : ''}` : (meilleurPerso ? `Record ${temps(meilleurPerso)}` : ' '));
-  poser('hud-vitesse', `${Math.round(v.vitesse * 0.9)}`);
+  poser('hud-vitesse', `${Math.round(v.v * 0.9)}`);
 
   poser('pneu-nom', NOMS_PNEU[v.pneu]);
   poser('pneu-etat', v.crevaison ? 'crevé !' : v.degats > 0.15 ? 'abîmé' : '');
@@ -43,9 +41,15 @@ export function majHud(c, v, { meilleurPerso, prochainPneu } = {}) {
   const eau = c.eau, plus = eauCible(c, c.t + 25);
   const ciel = eau > 0.65 ? 'Pluie' : eau > 0.22 ? 'Humide' : 'Sec';
   poser('hud-meteo', `${ciel}${plus > eau + 0.25 ? ' ↗ pluie bientôt' : plus < eau - 0.25 ? ' ↘ ça sèche' : ''}`);
-  poser('hud-limites', v.avert ? `Limites ${v.avert % 3}/3` : '');
-  poser('hud-penalite', v.penalite ? `+${v.penalite} s` : '');
-  const bonus = v.pilote > 0 ? (v.pilote > 99 ? 'Auto' : `Auto ${Math.ceil(v.pilote)}`) : v.turbo > 0 ? 'Turbo' : v.bonus ? NOMS_BONUS[v.bonus] : '—';
+
+  // L'aspiration : une jauge qui se remplit derrière une voiture, et la ligne actuelle
+  $('sillage-niveau').style.width = `${Math.round(v.charge * 100)}%`;
+  $('sillage-niveau').classList.toggle('plein', v.charge > 0.85);
+  [...$('hud-lignes').children].forEach((p, i) => p.classList.toggle('actif', i === v.ligne + 1));
+  const stand = v.enStand ? 'Au stand' : v.pit ? 'Arrêt demandé' : v.incident ? 'Tête-à-queue !' : '';
+  poser('hud-stand', stand);
+  $('pit-btn').setAttribute('aria-pressed', String(v.pit));
+  const bonus = v.turbo > 0 ? 'Turbo' : v.sillage > 0 ? 'Sillage' : v.bouclier > 0 ? 'Bouclier' : v.bonus ? NOMS_BONUS[v.bonus] : '—';
   poser('bonus-nom', bonus);
   $('bonus-case').classList.toggle('plein', !!v.bonus);
 }

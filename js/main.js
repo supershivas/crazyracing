@@ -1,25 +1,25 @@
 // Le cycle de vie : écran titre → préparation → course → résultats ; réglages,
-// sauvegarde, mise à jour, debug. Les règles sont dans course.js, le dessin dans render.js.
-import { createPixelCanvas } from './lib/pixel-canvas.js?v=0.3.0';
-import { createLoop } from './lib/loop.js?v=0.3.0';
-import { createKeys, stopTypeahead } from './lib/keys.js?v=0.3.0';
-import { lockBrowserGestures } from './lib/pointer.js?v=0.3.0';
-import { createGamepad } from './lib/gamepad.js?v=0.3.0';
-import { createStore, autosave, pickJSONFile } from './lib/save.js?v=0.3.0';
-import { createAudio } from './lib/audio.js?v=0.3.0';
-import { startUpdateCheck, loadVersion, loadChangelog, downloadJSON } from './lib/app-update.js?v=0.3.0';
-import { ROLES } from './palette.js?v=0.3.0';
-import { nouvelleCourse, avancerCourse, grille, grilleLigne, PNEUS } from './course.js?v=0.3.0';
-import { construirePiste } from './piste.js?v=0.3.0';
-import { creerDecor, creerVue, dessiner, dessinerCarte } from './render.js?v=0.3.0';
-import { chargerContenu } from './design-store.js?v=0.3.0';
-import { creerEntrees, creerTactile } from './entrees.js?v=0.3.0';
-import { majHud, message, feux, viderHud, temps, tempsPrecis } from './hud.js?v=0.3.0';
-import { CIRCUITS } from './data/circuits.js?v=0.3.0';
-import { creerEditeur } from './editeur.js?v=0.3.0';
-import { circuitVersCode, codeVersCircuit, normaliserCircuit } from './circuit-code.js?v=0.3.0';
-import { creerHote, rejoindre, reseauDisponible } from './reseau.js?v=0.3.0';
-import { instantane, appliquer, commandeValide, evenementsPourInvite, lisser } from './instantane.js?v=0.3.0';
+// sauvegarde, mise à jour, debug. Les règles sont dans course.js, le dessin 3D dans render3d.js.
+import { createPixelCanvas } from './lib/pixel-canvas.js?v=0.4.0';
+import { createLoop } from './lib/loop.js?v=0.4.0';
+import { createKeys, stopTypeahead } from './lib/keys.js?v=0.4.0';
+import { lockBrowserGestures } from './lib/pointer.js?v=0.4.0';
+import { createGamepad } from './lib/gamepad.js?v=0.4.0';
+import { createStore, autosave, pickJSONFile } from './lib/save.js?v=0.4.0';
+import { createAudio } from './lib/audio.js?v=0.4.0';
+import { startUpdateCheck, loadVersion, loadChangelog, downloadJSON } from './lib/app-update.js?v=0.4.0';
+import { ROLES } from './palette.js?v=0.4.0';
+import { nouvelleCourse, avancerCourse, grille, grilleLigne, positionner, PNEUS } from './course.js?v=0.4.0';
+import { construirePiste } from './piste.js?v=0.4.0';
+import { dessinerCarte } from './carte.js?v=0.4.0';
+import { chargerContenu } from './design-store.js?v=0.4.0';
+import { creerEntrees, creerTactile } from './entrees.js?v=0.4.0';
+import { majHud, message, feux, viderHud, temps, tempsPrecis } from './hud.js?v=0.4.0';
+import { CIRCUITS } from './data/circuits.js?v=0.4.0';
+import { creerEditeur } from './editeur.js?v=0.4.0';
+import { circuitVersCode, codeVersCircuit, normaliserCircuit } from './circuit-code.js?v=0.4.0';
+import { creerHote, rejoindre, reseauDisponible } from './reseau.js?v=0.4.0';
+import { instantane, appliquer, commandeValide, evenementsPourInvite, lisser } from './instantane.js?v=0.4.0';
 
 const JEU = 'crazyracing';
 const $ = id => document.getElementById(id);
@@ -30,14 +30,14 @@ const DEBUG = params.has('debug');
 // Une seule source pour les couleurs : la palette, posée en variables CSS
 for (const [role, couleur] of Object.entries(ROLES)) document.documentElement.style.setProperty(`--jeu-${role}`, couleur);
 
-const OPTIONS = { circuit: 'port', tours: 5, meteo: 'sec', pneu: 'slick', adversaires: 7, niveau: 'moyen', bonus: true };
+const OPTIONS = { circuit: 'port', tours: 5, meteo: 'sec', pneu: 'slick', adversaires: 7, niveau: 'moyen', bonus: true, heure: 'jour' };
 const store = createStore({
   game: JEU,
   debug: DEBUG,
   entries: {
     // records : { [circuit]: { meilleur, fantome: { temps, pts } } } ; circuits : ceux de l'éditeur
     partie: { version: 1, defaults: { records: {}, options: OPTIONS, circuits: [] } },
-    prefs: { version: 1, debugWrites: false, defaults: { musique: 70, effets: 80, pseudo: 'Pilote' } },
+    prefs: { version: 1, debugWrites: false, defaults: { musique: 70, effets: 80, pseudo: 'Pilote', qualite: 'haute', camera: 'incline', heure: 'jour' } },
   },
   secret: ['gh-token'],
 });
@@ -53,10 +53,11 @@ for (const [nom, def] of Object.entries({
   crissement: { type: 'noise', dur: 0.14, vol: 0.12, filter: 3200 },
   penalite: [{ type: 'sawtooth', freq: 200, dur: 0.12, vol: 0.3 }, { type: 'sawtooth', freq: 150, dur: 0.2, vol: 0.3, at: 0.12 }],
   tour: [{ type: 'triangle', freq: 523, dur: 0.07 }, { type: 'triangle', freq: 784, dur: 0.14, at: 0.07 }],
+  alerte: [{ type: 'square', freq: 740, dur: 0.1, vol: 0.25 }, { type: 'square', freq: 740, dur: 0.1, vol: 0.25, at: 0.16 }],
+  ligne: { type: 'triangle', freq: 330, to: 440, dur: 0.07, vol: 0.2 },
 })) audio.define(nom, def);
 
 const contenu = await chargerContenu();
-const sprites = contenu.sprites;
 const R = contenu.reglages;
 
 const px = createPixelCanvas($('canvas'), { width: 384, height: 216, mode: 'extend', maxZoom: 2 });
@@ -70,16 +71,16 @@ const defDe = options => options.def ?? circuitPar(options.circuit);
 
 // ─── État de la course en cours ────────────────────────────────────────────
 let course = null;
-let decor = null;
-let vue = creerVue();
+let rendu3d = null;   // three.js, chargé à la première course
+let dernierRendu = 0;
 let miniCarte = null;
 let derniereOptions = null;
 let joueur = null;
 let prochainPneu = 'slick';
 let fantome = null;
 let fini = false;
+let couleurCourse = null;
 let ligne = null; // la course en ligne : { role: 'hote' | 'invite', lien, … }
-const decors = new Map();
 
 const enJeu = () => !!course && $('titre').hidden && !$('dialogue-resultats').open;
 function sauvegarder() { store.save('partie', profil); }
@@ -97,6 +98,7 @@ function montrerTitre() {
   loop.pause();
   course = null;
   editeur.fermer();
+  $('canvas3d').hidden = true; $('canvas').hidden = true;
   $('titre').hidden = false;
   $('hud').hidden = true;
   $('m-course').focus();
@@ -107,18 +109,24 @@ function quitterCourse() {
   if (derniereOptions?.retour === 'editeur' && brouillonEditeur) { course = null; $('hud').hidden = true; ouvrirEditeur(brouillonEditeur); } else montrerTitre();
 }
 
-function decorDe(def) {
-  const cle = JSON.stringify([def.points, def.largeur, def.theme]);
-  if (!decors.has(cle)) {
-    if (decors.size > 3) decors.clear();
-    decors.set(cle, creerDecor(construirePiste(def), def, sprites, R));
+// three.js n'est chargé qu'à la première course : l'écran titre reste léger
+async function assurerRendu() {
+  if (rendu3d) return rendu3d;
+  try {
+    const { creerRendu3D } = await import('./render3d.js?v=0.4.0');
+    const qualite = params.get('q') ?? prefs.qualite;
+    rendu3d = creerRendu3D($('canvas3d'), { qualite, heure: profil.options?.heure ?? 'jour' });
+    new ResizeObserver(() => rendu3d.redimensionner($('ecran').clientWidth, $('ecran').clientHeight)).observe($('ecran'));
+    rendu3d.redimensionner($('ecran').clientWidth, $('ecran').clientHeight);
+    return rendu3d;
+  } catch (e) {
+    console.error(e);
+    toast('La 3D n\'est pas disponible sur cet appareil (WebGL).');
+    return null;
   }
-  const d = decors.get(cle);
-  d.traces.getContext('2d').clearRect(0, 0, d.W, d.H);
-  return d;
 }
 
-function lancer(options) {
+async function lancer(options) {
   derniereOptions = options;
   const def = defDe(options);
   const chrono = options.mode === 'chrono';
@@ -130,29 +138,32 @@ function lancer(options) {
   else voitures = grille(options.adversaires, { niveau: options.niveau, pneu: options.pneu }).map(v => (v.humain ? { ...v, nom: prefs.pseudo, pneu: options.pneu } : v));
   course = nouvelleCourse(def, { mode: chrono ? 'chrono' : 'course', tours: options.tours, meteo: options.meteo, graine, voitures, bonus: !chrono && options.bonus, fantome, R });
   if (ligne?.role === 'hote') {
-    ligne.evAcc = []; ligne.pas = 0; ligne.snaps = 0; ligne.cmd = commandeValide({});
+    ligne.evAcc = []; ligne.pas = 0; ligne.snaps = 0; ligne.actes = [];
     ligne.lien.envoyer({ k: 'go', def: normaliserCircuit({ ...def, id: 'ligne' }), options: { tours: options.tours, meteo: options.meteo, bonus: options.bonus }, voitures, graine, moi: 'j2' });
   }
-  installerScene(def, options.pneu, 'j1');
+  await installerScene(def, options.pneu, 'j1', options.heure);
 }
 
 // Ce que la course a de commun, jouée seul, hôte ou invité : on installe décor, HUD, commandes
-function installerScene(def, pneu, idMoi) {
+async function installerScene(def, pneu, idMoi, heure) {
   joueur = course.voitures.find(v => v.id === idMoi);
   prochainPneu = pneu;
-  decor = decorDe(def);
-  vue = creerVue();
+  if (!await assurerRendu()) { course = null; montrerTitre(); return; }
+  rendu3d.reglerHeure(heure ?? profil.options?.heure ?? 'jour');
+  rendu3d.charger(course, def, R);
   miniCarte = dessinerCarte($('hud-carte'), course.piste);
   fini = false;
   viderHud();
   $('hud-messages').replaceChildren();
   entrees.reinitialiser();
   $('titre').hidden = true;
+  $('canvas3d').hidden = false; $('canvas').hidden = true;
   $('hud').hidden = false;
   $('dialogue-resultats').close();
   $('res-rejouer').hidden = ligne?.role === 'invite';
   tactile.afficher(matchMedia('(pointer: coarse)').matches);
   construireChoixPneus();
+  dernierRendu = performance.now();
   loop.resume();
 }
 
@@ -160,7 +171,7 @@ function construireChoixPneus() {
   const noms = { slick: 'Slick', inter: 'Inter', pluie: 'Pluie' };
   $('pneu-choix').replaceChildren(...PNEUS.map((p, i) => el('button', {
     textContent: `${i + 1} ${noms[p]}`,
-    onclick: () => { prochainPneu = p; audio.sfx('clic'); },
+    onclick: () => choisirPneu(p),
   })));
   [...$('pneu-choix').children].forEach((b, i) => { b.dataset.pneu = PNEUS[i]; });
 }
@@ -211,6 +222,7 @@ function preparer(mode) {
     champ('Tours', pasPas('tours', 1, 20, o.tours)),
     champ('Météo', segment('meteo', [['sec', 'Sec'], ['humide', 'Humide'], ['pluie', 'Pluie'], ['variable', 'Variable']], o.meteo)),
     champ('Pneus au départ', segment('pneu', [['slick', 'Slick'], ['inter', 'Inter'], ['pluie', 'Pluie']], o.pneu)),
+    champ('Heure', segment('heure', [['jour', 'Jour'], ['soir', 'Soir'], ['nuit', 'Nuit']], o.heure ?? 'jour')),
   ];
   if (mode !== 'chrono') {
     champs.push(
@@ -225,7 +237,7 @@ function preparer(mode) {
     if (d.returnValue !== 'partir') return;
     const f = new FormData($('form-course'));
     const opt = {
-      circuit: f.get('circuit') ?? o.circuit, tours: +f.get('tours'), meteo: f.get('meteo'), pneu: f.get('pneu'),
+      circuit: f.get('circuit') ?? o.circuit, tours: +f.get('tours'), meteo: f.get('meteo'), pneu: f.get('pneu'), heure: f.get('heure') ?? 'jour',
       adversaires: +(f.get('adversaires') ?? o.adversaires), niveau: f.get('niveau') ?? o.niveau, bonus: (f.get('bonus') ?? (o.bonus ? '1' : '0')) === '1',
     };
     profil.options = opt;
@@ -247,9 +259,10 @@ $('pause-reglages').onclick = () => $('dialogue-reglages').showModal();
 $('ouvrir-reglages').onclick = () => $('dialogue-reglages').showModal();
 $('res-rejouer').onclick = () => lancer(derniereOptions);
 $('res-menu').onclick = () => { $('dialogue-resultats').close(); quitterCourse(); };
-$('bonus-case').onclick = () => entrees.declencherBonus();
+$('bonus-case').onclick = () => entrees.pousser('bonus');
+$('pit-btn').onclick = () => entrees.pousser('pit');
 // Fenêtre quittée : pause (section 9)
-window.addEventListener('blur', pause);
+window.addEventListener('blur', () => pause());
 document.addEventListener('visibilitychange', () => { if (document.hidden) pause(); });
 
 // ─── Réglages ──────────────────────────────────────────────────────────────
@@ -262,6 +275,7 @@ for (const [id, cle, canal] of [['vol-musique', 'musique', 'music'], ['vol-effet
     if (canal === 'sfx') audio.sfx('clic');
   };
 }
+for (const [id, cle] of [['qualite', 'qualite'], ['camera', 'camera']]) { $(id).value = prefs[cle]; $(id).onchange = e => { prefs[cle] = e.target.value; store.save('prefs', prefs); if (cle === 'qualite') toast('La qualité s\'applique au prochain lancement du jeu'); }; }
 $('pseudo').value = prefs.pseudo;
 $('pseudo').onchange = e => { prefs.pseudo = e.target.value.trim().slice(0, 12) || 'Pilote'; e.target.value = prefs.pseudo; store.save('prefs', prefs); };
 $('exporter').onclick = () => { sauvegarder(); downloadJSON(store.exportAll(), `${JEU}-sauvegarde.json`); };
@@ -281,21 +295,34 @@ loadChangelog().then(liste => {
 });
 
 // ─── Commandes : clavier, manette, doigt (section 8) ───────────────────────
+// Une course se règle par impulsions : ligne, bonus, stand, pneus (voir entrees.js)
+function choisirPneu(p) {
+  if (!PNEUS.includes(p)) return;
+  prochainPneu = p; audio.sfx('clic');
+  if (ligne?.role === 'invite') ligne.lien.envoyer({ k: 'act', pneu: p });
+}
+function surImpulsion(type, v) {
+  if (!enJeu() || ligne?.role !== 'invite') return;
+  ligne.lien.envoyer({ k: 'act', ...(type === 'ligne' ? { ligne: v } : { [type]: true }) });
+}
 const keys = createKeys({
-  actions: { pause: ['Escape', 'p'], bonus: [' ', 'e', 'Enter'], p1: '1', p2: '2', p3: '3' },
+  actions: { pause: ['Escape', 'p'], gauche: ['ArrowLeft', 'q', 'a'], droite: ['ArrowRight', 'd'], bonus: [' ', 'Enter', 'ArrowUp', 'z', 'w'], pit: ['ArrowDown', 'e', 's'], p1: '1', p2: '2', p3: '3' },
   onAction: nom => {
-    if (nom === 'pause') pause(true);
-    else if (nom === 'bonus' && enJeu()) entrees.declencherBonus();
-    else if (/^p[123]$/.test(nom) && enJeu()) prochainPneu = PNEUS[+nom[1] - 1];
+    if (nom === 'pause') return pause(true);
+    if (!enJeu()) return;
+    if (nom === 'gauche') entrees.pousser('ligne', -1);
+    else if (nom === 'droite') entrees.pousser('ligne', 1);
+    else if (nom === 'bonus' || nom === 'pit') entrees.pousser(nom);
+    else if (/^p[123]$/.test(nom)) choisirPneu(PNEUS[+nom[1] - 1]);
   },
 });
 const pad = createGamepad({ actions: { pause: 'start' }, onAction: nom => { if (nom === 'pause') pause(true); } });
-const tactile = creerTactile($('tactile'));
-const entrees = creerEntrees({ keys, pad, tactile });
+const entrees = creerEntrees({ pad, onImpulsion: surImpulsion });
+const tactile = creerTactile($('tactile'), (type, v) => entrees.pousser(type, v));
 
 // ─── Les événements de la course : sons, messages, résultats ───────────────
-const NOMS_BONUS = { turbo: 'turbo', pilote: 'pilote automatique', bouclier: 'bouclier' };
-let dernierCrissement = -1;
+const NOMS_BONUS = { turbo: 'turbo', bouclier: 'bouclier', sillage: 'sillage renforcé', reparation: 'réparation' };
+let dernierCrissement = -1, derniereAlerte = -9;
 function traiter(ev) {
   for (const e of ev) {
     const moi = e.id === joueur.id;
@@ -304,15 +331,14 @@ function traiter(ev) {
       case 'depart': audio.sfx('depart'); break;
       case 'bonus': if (moi) { audio.sfx('bonus'); message(e.bonus === 'reparation' ? 'Pneus réparés' : `Bonus : ${NOMS_BONUS[e.bonus]}`, 'bon'); } break;
       case 'bonus-use': if (moi && e.bonus === 'turbo') audio.sfx('turbo'); break;
-      case 'choc': if (e.a === joueur.id || e.b === joueur.id) audio.sfx('coup'); break;
-      case 'mur': if (moi && e.vitesse > 60) audio.sfx('coup'); break;
-      case 'crevaison': if (moi) message('Crevaison ! Direction les stands', 'mauvais'); break;
-      case 'derapage': if (moi && course.t - dernierCrissement > 0.25) { dernierCrissement = course.t; audio.sfx('crissement'); } break;
-      case 'limites': if (moi) { audio.sfx('erreur'); message(`Limites de piste (${e.avert % 3 || 3}/3)`, 'mauvais'); } break;
-      case 'penalite': if (moi) { audio.sfx('penalite'); message(`Pénalité +${e.secondes} s — ${e.raison === 'limites' ? 'limites de piste' : 'collision'}`, 'mauvais'); } break;
+      case 'danger': if (course.t - derniereAlerte > 4) { derniereAlerte = course.t; audio.sfx('alerte'); message('Débris sur la piste : changez de ligne !', 'mauvais'); } break;
+      case 'incident': message(moi ? 'Tête-à-queue !' : `Tête-à-queue : ${course.voitures.find(v => v.id === e.id)?.nom ?? ''}`, moi ? 'mauvais' : ''); if (moi) audio.sfx('coup'); break;
+      case 'crevaison': if (moi) message('Crevaison ! Appelez l\'arrêt au stand', 'mauvais'); break;
+      case 'ligne-occupee': if (moi) { audio.sfx('erreur'); message('Ligne occupée'); } break;
+      case 'pit': if (moi) message(e.demande ? 'Arrêt au stand demandé' : 'Arrêt au stand annulé'); break;
+      case 'derapage': if (moi && course.t - dernierCrissement > 0.35) { dernierCrissement = course.t; audio.sfx('crissement'); } break;
       case 'tour': if (moi) { audio.sfx('tour'); message(`Tour ${e.tour} : ${temps(e.temps)}${e.meilleur ? ' · meilleur tour' : ''}`, e.meilleur ? 'bon' : ''); } break;
       case 'stand': if (moi) { audio.sfx('validation'); message(`Pneus changés : ${e.pneu}`, 'bon'); } break;
-      case 'remise': if (moi) message('Remis en piste par les commissaires'); break;
       case 'record': if (moi) message('Nouveau record du circuit !', 'bon'); break;
       case 'arrivee': if (moi) message('Drapeau à damiers !', 'bon'); break;
       case 'fin': finir(); break;
@@ -353,7 +379,7 @@ function finir() {
       const temp = r.fini ? (r === gagnant ? tempsPrecis(r.temps) : `+${(r.temps - gagnant.temps).toFixed(1)}`) : 'abandon';
       lignes.push(el('tr', { className: r.id === joueur.id ? 'moi' : '' },
         el('td', { textContent: r.pos }), el('td', { textContent: r.nom }),
-        el('td', { textContent: `${temp}${r.penalite ? ` (+${r.penalite} s)` : ''}` }), el('td', { textContent: temps(r.meilleur) })));
+        el('td', { textContent: temp }), el('td', { textContent: temps(r.meilleur) })));
     }
   }
   $('res-table').replaceChildren(...lignes);
@@ -371,6 +397,7 @@ const editeur = creerEditeur({
   onTester: def => {
     brouillonEditeur = structuredClone(editeur.circuit);
     editeur.fermer();
+    $('canvas').hidden = true;
     lancer({ mode: 'chrono', def: { ...def, id: 'essai' }, circuit: 'essai', tours: 3, meteo: 'sec', pneu: 'slick', retour: 'editeur' });
   },
   onEnregistrer: def => {
@@ -401,6 +428,7 @@ const editeur = creerEditeur({
 function ouvrirEditeur(def) {
   $('titre').hidden = true;
   $('hud').hidden = true;
+  $('canvas3d').hidden = true; $('canvas').hidden = false;
   editeur.ouvrir(def);
   loop.resume();
 }
@@ -475,7 +503,7 @@ async function ouvrirSalle(opt) {
   $('dialogue-ligne').showModal();
   try {
     const lien = await creerHote();
-    ligne = { role: 'hote', lien, opt, nomInvite: 'Invité', pret: false, cmd: commandeValide({}), evAcc: [], pas: 0, snaps: 0 };
+    ligne = { role: 'hote', lien, opt, nomInvite: 'Invité', pret: false, actes: [], evAcc: [], pas: 0, snaps: 0 };
     $('ligne-code-h').value = lien.code;
     lien.surMessage = o => {
       if (o.k === 'hello') {
@@ -484,7 +512,7 @@ async function ouvrirSalle(opt) {
         ligne.pret = true;
         $('ligne-etat-h').textContent = `${ligne.nomInvite} est connecté. À vous de lancer !`;
         $('ligne-lancer').disabled = false;
-      } else if (o.k === 'in') ligne.cmd = commandeValide(o);
+      } else if (o.k === 'act') ligne.actes.push(commandeValide(o));
       else if (o.k === 'bye') lien.fermer();
     };
     lien.surFermeture = () => {
@@ -515,7 +543,7 @@ $('ligne-connecter').onclick = async () => {
   $('ligne-etat-i').textContent = 'Création de la réponse…';
   try {
     const lien = await rejoindre($('ligne-code-i').value);
-    ligne = { role: 'invite', lien, cibles: new Map(), recu: 0, pas: 0, derniere: '' };
+    ligne = { role: 'invite', lien, cibles: new Map(), recu: 0, pas: 0 };
     $('ligne-code-r').value = lien.code; $('ligne-reponse-i').hidden = false;
     $('ligne-etat-i').textContent = 'En attente de l\'hôte…';
     lien.surMessage = o => recevoir(o);
@@ -542,13 +570,12 @@ function recevoir(o) {
     fantome = null;
     ligne.cibles = new Map(); ligne.recu = performance.now(); ligne.pas = 0;
     $('dialogue-ligne').close();
-    installerScene(def, derniereOptions.pneu, String(o.moi ?? 'j2'));
-    if (!joueur) { toast('Course illisible'); montrerTitre(); }
+    installerScene(def, derniereOptions.pneu, String(o.moi ?? 'j2'), profil.options?.heure).then(() => { if (!joueur) { toast('Course illisible'); montrerTitre(); } });
   } else if (o.k === 'snap' && course && ligne?.role === 'invite' && joueur) {
-    const visibles = ligne.cibles.size ? course.voitures.map(v => [v, v.x, v.y, v.cap]) : [];
+    const visibles = ligne.cibles.size ? course.voitures.map(v => [v, v.dist, v.d]) : [];
     const evs = appliquer(course, o);
-    ligne.cibles = new Map(course.voitures.map(v => [v.id, { x: v.x, y: v.y, vx: v.vx, vy: v.vy, cap: v.cap }]));
-    for (const [v, x, y, cap] of visibles) { v.x = x; v.y = y; v.cap = cap; }
+    ligne.cibles = new Map(course.voitures.map(v => [v.id, { dist: v.dist, d: v.d, v: v.v, lacet: v.lacet, lat: v.lat }]));
+    for (const [v, dist, d] of visibles) { v.dist = dist; v.d = d; positionner(course, v); }
     ligne.recu = performance.now();
     traiter(evs);
     if (course.phase === 'fin' && course.classement && !fini) finir();
@@ -567,15 +594,17 @@ const loop = createLoop({
   update(dt) {
     if (editeur.actif) return;
     if (!course || course.phase === 'fin') return;
-    const cmd = entrees.lire(dt);
-    cmd.pneu = prochainPneu;
-    if (ligne?.role === 'invite') { // l'invité conduit, l'hôte calcule
-      if (ligne.pas++ % 2 === 0) ligne.lien.envoyer({ k: 'in', ...cmd });
+    const impulsions = entrees.lire();
+    if (ligne?.role === 'invite') { // l'invité choisit, l'hôte calcule
       lisser(course, ligne.cibles, dt, (performance.now() - ligne.recu) / 1000);
       return;
     }
-    const commandes = { [joueur.id]: cmd };
-    if (ligne?.role === 'hote') commandes.j2 = ligne.cmd;
+    const commandes = { [joueur.id]: { ...impulsions, pneu: prochainPneu } };
+    if (ligne?.role === 'hote') {
+      const acte = { ligne: 0, bonus: false, pit: false, pneu: undefined };
+      for (const a of ligne.actes.splice(0)) { acte.ligne = Math.max(-1, Math.min(1, acte.ligne + a.ligne)); acte.bonus ||= a.bonus; acte.pit ||= a.pit; acte.pneu = a.pneu ?? acte.pneu; }
+      commandes.j2 = acte;
+    }
     const evs = avancerCourse(course, dt, commandes);
     if (ligne?.role === 'hote') {
       ligne.evAcc.push(...evs);
@@ -585,9 +614,11 @@ const loop = createLoop({
     traiter(evs);
   },
   render() {
+    const now = performance.now();
+    const dt = Math.min(0.1, (now - dernierRendu) / 1000); dernierRendu = now;
     if (editeur.actif) { editeur.dessiner(px.ctx); return; }
-    if (!course) { px.ctx.fillStyle = ROLES.fond; px.ctx.fillRect(0, 0, px.width, px.height); return; }
-    dessiner(px.ctx, course, vue, px, decor, sprites, { suivre: joueur.id, fantome });
+    if (!course || !rendu3d) return;
+    rendu3d.dessiner(dt, joueur.id, { vue: prefs.camera, fantome });
     majHud(course, joueur, { meilleurPerso: profil.records[course.def.id]?.meilleur, prochainPneu });
     feux(course);
     miniCarte?.(course.voitures);
@@ -606,15 +637,15 @@ startUpdateCheck({
 
 // ─── Mode debug (section 18) : chargé seulement avec ?debug=1 ──────────────
 if (DEBUG) {
-  const { installDebug, seedFromUrl } = await import('./lib/debug.js?v=0.3.0');
+  const { installDebug, seedFromUrl } = await import('./lib/debug.js?v=0.4.0');
   window.__seed = seedFromUrl() ?? undefined;
   const placer = p => {
     if (!course) return;
     const i = Math.floor((p.s % 1) * course.piste.n), pt = course.piste.pts[i];
-    Object.assign(joueur, { x: pt.x, y: pt.y, i, vx: 0, vy: 0, cap: Math.atan2(pt.ty, pt.tx) });
+    Object.assign(joueur, { dist: joueur.tour * course.piste.longueur + i * course.piste.pas, v: 0 });
   };
   installDebug({
-    state: () => course && { phase: course.phase, t: course.t, eau: course.eau, pos: joueur.pos, tour: joueur.tour, s: joueur.s, d: joueur.d, vitesse: joueur.vitesse, usure: joueur.usure, penalite: joueur.penalite, enJeu: enJeu(), pause: loop.paused },
+    state: () => course && { phase: course.phase, t: course.t, eau: course.eau, pos: joueur.pos, tour: joueur.tour, s: joueur.s, d: joueur.d, vitesse: joueur.v, usure: joueur.usure, ligne: joueur.ligne, charge: joueur.charge, enJeu: enJeu(), pause: loop.paused },
     places: { depart: { s: 0 }, quart: { s: 0.25 }, milieu: { s: 0.5 } },
     teleport: placer,
     setTimeScale: s => loop.setTimeScale(s),
@@ -623,7 +654,8 @@ if (DEBUG) {
     extra: {
       jouer: (o = {}) => lancer({ ...OPTIONS, mode: 'course', ...o }),
       course: () => course,
-      autopilote: () => { if (joueur) joueur.pilote = 1e9; },
+      agir: (o = {}) => entrees.pousser(o.type ?? 'bonus', o.v ?? 1),
+      rendu: () => rendu3d,
     },
   });
 }

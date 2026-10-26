@@ -15,90 +15,90 @@
 
 - **Production** : https://supershivas.github.io/crazyracing/
 - **Aperçu** : https://supershivas.github.io/crazyracing/apercu.html
-- **Genre** : course de voitures arcade (famille action), avec une couche de stratégie : pneus, météo, stands. Boucle principale : tenir la trajectoire à la limite de l'adhérence, tour après tour.
-- **Vue et rendu** : de dessus, pixel 2D en canvas maison (profil `pixel-2d-canvas`). Le circuit est peint pixel par pixel dans un canvas de la taille du monde (`creerDecor`), la caméra le découpe.
+- **Genre** : course de voitures « auto battler » (famille stratégie / gestion avec action) : les voitures roulent seules, le joueur règle sa ligne, son aspiration, ses pneus, son arrêt au stand et ses bonus. Boucle principale : se placer pour gagner de la vitesse et doubler.
+- **Vue et rendu** : de dessus incliné qui suit la voiture, 3D three.js avec lumière dynamique (soleil et ombres, lampadaires, phares, pluie, bloom). Profil game-system `pixel-3d-three`, mais **sans** rendu en basse résolution : le parti pris est le détail (voir Exceptions). L'éditeur de circuits reste en 2D (canvas).
 - **Cible** : bureau (clavier, manette) d'abord ; téléphone en paysage avec boutons à l'écran (aperçu de l'autre cible).
-- **Public** : joueur occasionnel à joueur averti ; inspiré de *Corner Cutters* (Ferdi Willemse, Steam, T4 2026) : on reprend l'idée (course 2D de dessus, pneus, météo, limites de piste), pas ses circuits, ses images ni ses noms.
-- **Session** : course de 1 à 20 tours (2 à 10 minutes), contre la montre contre son fantôme, records par circuit.
+- **Public** : joueur occasionnel à joueur averti ; inspiré de *Corner Cutters* (Ferdi Willemse, Steam, T4 2026) : on reprend l'idée (course de dessus, pneus, météo, stands), pas ses circuits, ses images ni ses noms.
+- **Session** : course de 1 à 20 tours (2 à 10 minutes), contre la montre contre son fantôme, records par circuit, course en ligne à deux sur le même réseau.
 - **Steam** : porte ouverte (section 22) : rien de distant, manette, plein écran, toutes tailles de fenêtre. Le jeu en ligne passe par WebRTC sans serveur.
 - Jeu : pas de sous-titre (section 3 des conventions).
 
 ### Palette
 
-Sweetie 16 (GrafxKid), en entier ; `x` et `z` sont les deux couleurs de livrée d'une équipe (`LIVREES`).
+Sweetie 16 (GrafxKid), en entier ; `x` et `z` sont les deux couleurs de livrée d'une équipe (`LIVREES`). La palette sert à l'interface, aux livrées et aux décors ; l'éclairage 3D produit les nuances.
 
 | Lettre | Valeur | Rôle |
 |---|---|---|
-| `n` | `#1a1c2c` | nuit : fond, contours, pneus |
+| `n` | `#1a1c2c` | nuit : fond, contours |
 | `p` | `#5d275d` | prune |
-| `r` | `#b13e53` | rouge : vibreurs, avertissements |
+| `r` | `#b13e53` | rouge |
 | `o` | `#ef7d57` | orange : accent, adversaires sur la carte |
-| `y` | `#ffcd75` | jaune : box, bonus |
+| `y` | `#ffcd75` | jaune : box |
 | `l` | `#a7f070` | vert clair |
 | `v` | `#38b764` | vert prairie |
 | `t` | `#257179` | sarcelle |
-| `m` | `#29366f` | bleu nuit : asphalte mouillé |
+| `m` | `#29366f` | bleu nuit |
 | `u` | `#3b5dc9` | bleu roi |
 | `c` | `#41a6f6` | bleu ciel |
-| `s` | `#73eff7` | cyan : pluie, pilote automatique |
-| `w` | `#f4f4f4` | blanc : texte, vibreurs |
+| `s` | `#73eff7` | cyan : sillage |
+| `w` | `#f4f4f4` | blanc : texte |
 | `h` | `#94b0c2` | gris bleu |
-| `i` | `#566c86` | ardoise : voie des stands |
-| `k` | `#333c57` | gris nuit : asphalte |
+| `i` | `#566c86` | ardoise |
+| `k` | `#333c57` | gris nuit |
 | `x` `z` | selon l'équipe | livrée |
 
 ### Échelle
 
-- Résolution logique : 384 × 216, mode `extend`, facteur entier (5 en 1080p).
-- Voiture : 12 × 7 pixels ; circuit de 34 px de large (trois voitures de front) ; un circuit fait 2 000 à 4 000 px.
-- Une unité du monde = un pixel logique ; vitesse affichée = px/s × 0,9.
+- 1 unité du monde ≈ 5 cm ; voiture 13 × 7 ; piste de 34 de large, trois lignes à −10, 0 et +10 ; un circuit fait 2 000 à 4 000.
+- Vitesse affichée = vitesse × 0,9 (km/h).
 
 ### Commandes
 
+On ne pilote pas : on choisit. Chaque commande est une impulsion.
+
 | Action | Clavier | Doigt | Manette |
 |---|---|---|---|
-| Accélérer | ↑ W (Z en AZERTY) | bouton ▲ | A, gâchette droite |
-| Freiner, reculer | ↓ S | bouton ▼ | B, gâchette gauche |
-| Tourner | ← → A D (Q D) | boutons ◀ ▶ | stick gauche, croix |
-| Utiliser le bonus | Espace, E, Entrée | la case du bonus | X |
-| Pneus au prochain arrêt | 1 2 3 | les trois boutons du HUD | — |
-| Pause | Échap, P | bouton pause | Start |
+| Ligne à gauche / à droite | ← → Q D (A D) | ◀ ▶ | croix ou stick (un coup) |
+| Bonus | Espace, Entrée, ↑ | ★ ou la case du bonus | A, X |
+| Appeler / annuler l'arrêt au stand | ↓, E, S | ⛽ ou le bouton Stand | B, Y |
+| Pneus du prochain arrêt | 1 2 3 | les trois boutons du HUD | — |
+| Pause (hors ligne) | Échap, P | bouton pause | Start |
 
 ## Stack
 
 - Vanilla JS, modules ES, sans build ; GitHub Pages par le workflow
   `.github/workflows/pages.yml` (tests avant publication).
+- **three.js 0.170.0** copié dans `vendor/` (avec sa licence et les addons de post-traitement : bloom,
+  environnement de pièce), chargé par une `importmap` dans `index.html` et `labo.html` ; jamais de CDN.
+  Accord de Jérôme (demande du 26/10/2026). `render3d.js` n'est importé qu'à la première course.
 - Modules de game-system dans `js/lib/` (tenus à jour par
   `scripts/sync-game-system.sh` au début de chaque session) ; outils dans
   `outils/`.
-- Données : `localStorage`, clés `crazyracing:partie`, `crazyracing:prefs`,
+- Données : `localStorage`, clés `crazyracing:partie` (records, circuits perso), `crazyracing:prefs`,
   `crazyracing:atelier` (brouillon de l'atelier), `crazyracing:gh-token` (jamais
   exporté). Export / import JSON dans les réglages.
-- Dépendances : aucune.
+- Qualité graphique : `haute` (ombres 2048, bloom, MSAA), `moyenne`, `basse` (sans ombres ni bloom) ;
+  `?q=basse` dans l'adresse pour forcer (tests, machines sans carte graphique).
 
 ## Structure
 
-- `index.html` — écran titre, HUD, préparation de course, résultats, réglages, pause (dialogues rattachés au body).
-- `apercu.html` — le jeu dans un cadre de téléphone (iframe à la vraie taille).
-- `js/main.js` — cycle de vie : titre → préparation → course → résultats ; réglages ;
-  sauvegarde (records, circuits perso) ; mise à jour ; debug.
-- `js/piste.js` — géométrie d'un circuit (spline fermée, échantillons tous les 4 px,
-  projection d'un point, contrôle de tracé). Pur.
-- `js/voiture.js` — physique (cap ≠ vitesse, adhérence limitée), pneus (usure, chaleur),
-  murs, contacts. Pur.
-- `js/ia.js` — le pilote : vitesse permise par chaque virage à venir, freinage, côté libre,
-  voie des stands. Sert aussi au bonus « pilote automatique ». Pur.
-- `js/course.js` — les règles d'une course : grille, feux, tours, météo, stands, bonus,
-  limites de piste, pénalités, classement. Pur, sans hasard hors `rng`.
-- `js/render.js` — le dessin ; ne modifie jamais l'état de la course.
-- `js/editeur.js` — l'éditeur de circuits (points de contrôle, vérification en direct) ; `js/circuit-code.js` — le code de partage (pur, assaini).
-- `js/reseau.js` — la liaison WebRTC sans serveur (codes CRO. / CRR.) ; `js/instantane.js` — ce que l'hôte envoie à l'invité (pur, assaini).
-- `js/hud.js`, `js/entrees.js` — le HUD en DOM ; clavier, manette et doigt → commande.
-- `js/palette.js`, `js/sprites-data.js`, `js/data/` (réglages, circuits) — la donnée.
-- `js/design-store.js` — le contenu publié par l'atelier (`assets/design/`)
-  plus le brouillon de ce navigateur.
-- `labo.html`, `js/labo.js` — le labo (section 16).
-- `atelier.html`, `js/atelier.js`, `css/atelier.css` — l'atelier (section 17).
+- `index.html` — écran titre, HUD, préparation de course, résultats, réglages, pause, en ligne, éditeur (dialogues rattachés au body).
+- **Les règles (pures, testées sans navigateur)** :
+  - `js/piste.js` — géométrie d'un circuit (spline fermée, échantillons tous les 4, projection, contrôle de tracé).
+  - `js/voiture.js` — l'état d'une voiture, adhérence, vitesse permise par les virages à venir sur une ligne.
+  - `js/ia.js` — le choix de ligne des voitures de l'ordinateur (sillage, trafic, dangers, bonus, corde).
+  - `js/course.js` — la course : grille, feux, vitesse automatique, sillage, stands, incidents, dangers, bonus, classement.
+  - `js/circuit-code.js`, `js/instantane.js` — le code de partage d'un circuit ; ce que l'hôte envoie à l'invité (assaini).
+- **Le dessin** :
+  - `js/render3d.js` — orchestre : caméra, voitures, lignes guides, sillage, dangers, bonus, particules, post-traitement.
+  - `js/monde3d.js` — sol, asphalte, vibreurs, stands, portique, tribunes, glissières, lampadaires, décor par thème.
+  - `js/voiture3d.js` — le modèle de voiture (formes simples), roues, feux, étiquette.
+  - `js/lumieres.js` — ciel, soleil, lampadaires, phares, pluie, brume : jour / soir / nuit.
+  - `js/carte.js` — le circuit en petit (HUD, liste des circuits).
+- **Le reste** : `js/main.js` (cycle de vie), `js/hud.js`, `js/entrees.js`, `js/editeur.js` (2D), `js/reseau.js` (WebRTC sans serveur),
+  `js/palette.js`, `js/data/` (réglages, circuits), `js/design-store.js` (réglages publiés par l'atelier).
+- `labo.html`, `js/labo.js` — le labo (section 16) : lumière, aspiration, météo en 3D.
+- `atelier.html`, `js/atelier.js` — l'atelier (section 17) : réglages chiffrés.
 - `test/` — `node outils/test-run.mjs`.
 - `lisibilite.config.mjs`, `playtest.parcours.mjs` — configuration des outils.
 
@@ -114,25 +114,33 @@ node outils/stamp-version.mjs            # après chaque changement de version.j
 
 ## Exceptions aux conventions
 
-<!-- Règles de .claude/conventions-jeu.md qui ne s'appliquent pas ici, et pourquoi. -->
+- **Profil `pixel-3d-three`** : pas de rendu en basse résolution ni de palette exacte. Jérôme veut du détail
+  et une lumière dynamique ; l'éclairage produit des couleurs hors palette. La palette reste celle de
+  l'interface et des livrées. Coût : une carte graphique est nécessaire pour la qualité haute.
+- **Pas de pause en ligne** : la course continue ; la pause ouvre un menu pour quitter.
 
 ## Ce qui a été retiré
 
-<!-- | Quoi | Version | Pourquoi (ce que ça coûtait) | -->
+| Quoi | Version | Pourquoi (ce que ça coûtait) |
+|---|---|---|
+| Conduite au volant (gaz, frein, braquage, glisse, sorties de piste, pénalités de limites) | 0.4.0 | « Très difficile » (Jérôme) : la course devient un auto battler ; on garde la physique de l'adhérence comme vitesse permise par les virages |
+| Rendu 2D en pixels, sprites, éditeur de pixels | 0.4.0 | Remplacés par la 3D ; le labo et l'atelier n'ont plus de dessins à retoucher |
+| Pilote automatique (bonus), collisions entre voitures | 0.4.0 | Plus de conduite à automatiser ; les voitures se bloquent sur leur ligne |
 
 ## Pièges connus
 
-- **En ligne** : l'hôte calcule tout (`avancerCourse` avec les commandes de l'invité) ; l'invité ne fait
-  tourner aucune règle, il applique des instantanés (`appliquer`) et lisse les positions. Tout ce qui
-  vient du réseau est borné champ par champ (`commandeValide`, `appliquer`, `normaliserCircuit`).
-  Un `[hidden]` est écrasé par un `display` de classe : la règle `[hidden] { display: none !important }`
-  est dans `style.css`.
-- **Circuit qui se croise** (Pont du Huit) : `projeter` cherche autour du dernier échantillon connu
-  (`v.i`), jamais partout, sinon la voiture saute de branche au croisement. Toute téléportation
-  (debug, tests) doit mettre `v.i` à jour.
-- **Le frein maintenu à l'arrêt ne recule que si la commande porte `recul`** : sans cela, les voitures
-  à l'arrêt (feux, stand) reculaient toutes seules.
-- **Limites de piste** : `v.tour >= 0` seulement (la grille est derrière la ligne), sinon des
-  avertissements partent au départ.
-- **Un circuit se vérifie** (`verifierPiste`) : rayon minimal, croisements, tronçons qui se frôlent.
-  Les tests l'exigent des circuits fournis ; l'éditeur l'affiche.
+- **Une voiture est (dist, d), pas (x, y)** : `positionner(c, v)` calcule x, y, cap, s. Toute modification de `dist` ou `d`
+  (tests, réseau, debug) doit être suivie de `positionner`. `dist` est négatif avant la ligne de départ.
+- **La longueur d'une ligne** vaut `1 − d·k` fois celle de la ligne centrale (`facteurLigne`) ; la courbure
+  d'une ligne `k/(1 − d·k)`. Le signe a été mesuré (intérieur = d de même signe que k), ne pas le « corriger ».
+- **Le débris** touche une ligne si `|d_voiture − d_débris| < rayon + largeur/2` : avec des lignes à 10 d'écart, un
+  rayon de 7 touchait aussi les lignes voisines (impossible à éviter). `danger.rayon` = 4.
+- **Rubans de piste** : le sens des triangles compte (`ruban()` dans `monde3d.js`) ; à l'envers, tout le circuit est invisible
+  (face arrière) et seuls les objets en 3D apparaissent.
+- **Un `[hidden]` est écrasé par un `display` de classe** : la règle `[hidden] { display: none !important }` est dans `style.css`.
+- **Impulsions réseau** : l'invité n'envoie que ses choix (`{ k: 'act', ligne, bonus, pit, pneu }`) ; le canal est fiable et ordonné
+  pour qu'aucun choix ne se perde. L'hôte calcule tout ; l'invité applique des instantanés (`appliquer`) et lisse `dist`/`d`.
+  Tout ce qui vient du réseau est borné champ par champ (`commandeValide`, `appliquer`, `normaliserCircuit`).
+- **Les tests de rendu sans carte graphique** : SwiftShader donne 1 à 5 images par seconde ; utiliser `?q=basse`, une petite fenêtre,
+  et ne pas conclure sur les images par seconde.
+- **Circuit qui se croise** (Pont du Huit) : `projeter` cherche autour du dernier échantillon connu quand on lui donne un indice.

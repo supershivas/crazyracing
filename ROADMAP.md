@@ -13,8 +13,8 @@ Statuts : **à l'étude** · **validé** (Jérôme a tranché) · **en cours** �
 
 **Statut** : à mesurer
 
-- [x] Une voiture qui glisse, des pneus qui s'usent, trois circuits
-- [x] Des adversaires, des limites de piste, un classement
+- [x] Des voitures qui roulent seules, trois lignes, un sillage, des pneus qui s'usent, trois circuits
+- [x] Des adversaires qui choisissent leur ligne, un classement
 - [ ] Le critère de validation, mesuré (voir DESIGN.md)
 
 ### Jeu en ligne : à éprouver sur deux vraies machines
@@ -25,6 +25,14 @@ Statuts : **à l'étude** · **validé** (Jérôme a tranché) · **en cours** �
 **Limite connue** : les adresses locales sont masquées derrière un nom `.local` (mDNS) ; sur un réseau qui bloque mDNS la liaison échoue.
 
 ## À l'étude
+
+### Détails et contenu 3D
+
+**Statut** : à l'étude
+**Constat** : le décor est posé en formes simples ; l'asphalte, les tribunes et les bâtiments peuvent gagner en détails.
+**Proposition** : faire varier les voitures (carrosserie, aileron), ajouter des spectateurs, des panneaux publicitaires fictifs, des reflets de ciel, des traces de pneus qui restent, des flaques qui se remplissent sur les lignes.
+**Ce que ça coûte** : modèles et textures générés ; un budget de triangles à mesurer sur machine modeste.
+**Mesure** : 60 images/s en qualité moyenne.
 
 ### Championnat, qualifications, classes de voitures
 

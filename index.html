@@ -8,12 +8,14 @@
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="js/lib/game.css?v=0.3.0">
-<link rel="stylesheet" href="css/style.css?v=0.3.0">
+<script type="importmap">{"imports":{"three":"./vendor/three.module.min.js","three/addons/":"./vendor/three-addons/"}}</script>
+<link rel="stylesheet" href="js/lib/game.css?v=0.4.0">
+<link rel="stylesheet" href="css/style.css?v=0.4.0">
 </head>
 <body>
 <div class="jeu-ecran" id="ecran">
-  <canvas class="jeu-canvas" id="canvas" aria-label="Crazy Racing"></canvas>
+  <canvas class="rendu3d" id="canvas3d" aria-label="La course en 3D"></canvas>
+  <canvas class="jeu-canvas" id="canvas" aria-label="Éditeur de circuits" hidden></canvas>
 
   <!-- HUD : en DOM par-dessus le canvas, mêmes couleurs que lui -->
   <div class="hud" id="hud" hidden>
@@ -42,15 +44,19 @@
       </div>
       <div class="hud-bloc hud-etat">
         <span id="hud-meteo">Sec</span>
-        <span id="hud-limites"></span>
-        <span id="hud-penalite"></span>
+        <span id="hud-stand"></span>
+        <div class="sillage" title="Aspiration : suivez une voiture de près, en ligne">
+          <small>Sillage</small><div class="jauge"><i id="sillage-niveau"></i></div>
+        </div>
+        <div class="lignes" id="hud-lignes" aria-label="Votre ligne"><i></i><i></i><i></i></div>
       </div>
+      <button class="bonus-case" id="pit-btn" aria-label="Appeler l'arrêt au stand" aria-pressed="false"><span>Stand</span></button>
       <button class="bonus-case" id="bonus-case" aria-label="Utiliser le bonus"><span id="bonus-nom">—</span></button>
       <div class="hud-bloc hud-vitesse"><b id="hud-vitesse">0</b><small>km/h</small></div>
     </div>
     <div class="tactile" id="tactile" hidden>
-      <div class="tactile-g"><button data-k="gauche" aria-label="Gauche">◀</button><button data-k="droite" aria-label="Droite">▶</button></div>
-      <div class="tactile-d"><button data-k="frein" aria-label="Frein">▼</button><button data-k="gaz" aria-label="Accélérer">▲</button></div>
+      <div class="tactile-g"><button data-k="gauche" aria-label="Ligne de gauche">◀</button><button data-k="droite" aria-label="Ligne de droite">▶</button></div>
+      <div class="tactile-d"><button data-k="pit" aria-label="Stand">⛽</button><button data-k="bonus" aria-label="Bonus">★</button></div>
     </div>
   </div>
 
@@ -177,13 +183,15 @@
     <button class="bouton secondaire" id="pause-reglages">Réglages</button>
     <button class="bouton secondaire" id="quitter">Écran titre</button>
   </div>
-  <p class="aide">↑ ↓ ← → ou ZQSD : conduire · Espace : bonus · 1 2 3 : pneus au prochain arrêt · Échap : pause</p>
+  <p class="aide">← → : changer de ligne · Espace : bonus · ↓ ou E : appeler l'arrêt au stand · 1 2 3 : pneus du prochain arrêt · Échap : pause</p>
 </dialog>
 
 <dialog id="dialogue-reglages" aria-label="Réglages">
   <h2>Réglages</h2>
   <label class="curseur">Musique <input type="range" id="vol-musique" min="0" max="100" step="10"></label>
   <label class="curseur">Effets <input type="range" id="vol-effets" min="0" max="100" step="10"></label>
+  <label class="curseur">Qualité <select id="qualite"><option value="haute">Haute</option><option value="moyenne">Moyenne</option><option value="basse">Basse (rapide)</option></select></label>
+  <label class="curseur">Caméra <select id="camera"><option value="incline">Inclinée</option><option value="haut">De dessus</option></select></label>
   <label class="curseur">Pseudo <input type="text" id="pseudo" maxlength="12" autocomplete="off"></label>
   <hr>
   <p class="version" id="version">v…</p>
@@ -200,6 +208,6 @@
 </dialog>
 
 <div class="jeu-toast" id="toast" role="status" hidden></div>
-<script type="module" src="js/main.js?v=0.3.0"></script>
+<script type="module" src="js/main.js?v=0.4.0"></script>
 </body>
 </html>

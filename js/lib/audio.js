@@ -6,7 +6,7 @@
    fichier à charger), la musique peut être un fichier ou une boucle de notes.
 
    Module ES sans dépendance :
-     import { createAudio } from './lib/audio.js?v=0.3.0'
+     import { createAudio } from './lib/audio.js?v=0.4.0'
      const audio = createAudio({ music: 0.7, sfx: 0.8 })   // volumes 0..1
      audio.unlockOn(document)            // au premier pointerdown / keydown
      audio.sfx('saut')                   // un son de la banque (voir SOUNDS)

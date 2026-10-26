@@ -1,7 +1,7 @@
 {
-  "version": "0.3.0",
+  "version": "0.4.0",
   "date": "2026-10-26",
   "changes": [
-    "Course en ligne sur le même réseau : un code à échanger entre l'hôte et l'invité, sans serveur"
+    "Le jeu en 3D avec lumière dynamique ; on choisit sa ligne et son aspiration au lieu de conduire"
   ]
 }
