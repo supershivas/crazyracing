@@ -1,23 +1,25 @@
 // Le cycle de vie : écran titre → préparation → course → résultats ; réglages,
 // sauvegarde, mise à jour, debug. Les règles sont dans course.js, le dessin dans render.js.
-import { createPixelCanvas } from './lib/pixel-canvas.js?v=0.2.0';
-import { createLoop } from './lib/loop.js?v=0.2.0';
-import { createKeys, stopTypeahead } from './lib/keys.js?v=0.2.0';
-import { lockBrowserGestures } from './lib/pointer.js?v=0.2.0';
-import { createGamepad } from './lib/gamepad.js?v=0.2.0';
-import { createStore, autosave, pickJSONFile } from './lib/save.js?v=0.2.0';
-import { createAudio } from './lib/audio.js?v=0.2.0';
-import { startUpdateCheck, loadVersion, loadChangelog, downloadJSON } from './lib/app-update.js?v=0.2.0';
-import { ROLES } from './palette.js?v=0.2.0';
-import { nouvelleCourse, avancerCourse, grille, PNEUS } from './course.js?v=0.2.0';
-import { construirePiste } from './piste.js?v=0.2.0';
-import { creerDecor, creerVue, dessiner, dessinerCarte } from './render.js?v=0.2.0';
-import { chargerContenu } from './design-store.js?v=0.2.0';
-import { creerEntrees, creerTactile } from './entrees.js?v=0.2.0';
-import { majHud, message, feux, viderHud, temps, tempsPrecis } from './hud.js?v=0.2.0';
-import { CIRCUITS } from './data/circuits.js?v=0.2.0';
-import { creerEditeur } from './editeur.js?v=0.2.0';
-import { circuitVersCode, codeVersCircuit } from './circuit-code.js?v=0.2.0';
+import { createPixelCanvas } from './lib/pixel-canvas.js?v=0.3.0';
+import { createLoop } from './lib/loop.js?v=0.3.0';
+import { createKeys, stopTypeahead } from './lib/keys.js?v=0.3.0';
+import { lockBrowserGestures } from './lib/pointer.js?v=0.3.0';
+import { createGamepad } from './lib/gamepad.js?v=0.3.0';
+import { createStore, autosave, pickJSONFile } from './lib/save.js?v=0.3.0';
+import { createAudio } from './lib/audio.js?v=0.3.0';
+import { startUpdateCheck, loadVersion, loadChangelog, downloadJSON } from './lib/app-update.js?v=0.3.0';
+import { ROLES } from './palette.js?v=0.3.0';
+import { nouvelleCourse, avancerCourse, grille, grilleLigne, PNEUS } from './course.js?v=0.3.0';
+import { construirePiste } from './piste.js?v=0.3.0';
+import { creerDecor, creerVue, dessiner, dessinerCarte } from './render.js?v=0.3.0';
+import { chargerContenu } from './design-store.js?v=0.3.0';
+import { creerEntrees, creerTactile } from './entrees.js?v=0.3.0';
+import { majHud, message, feux, viderHud, temps, tempsPrecis } from './hud.js?v=0.3.0';
+import { CIRCUITS } from './data/circuits.js?v=0.3.0';
+import { creerEditeur } from './editeur.js?v=0.3.0';
+import { circuitVersCode, codeVersCircuit, normaliserCircuit } from './circuit-code.js?v=0.3.0';
+import { creerHote, rejoindre, reseauDisponible } from './reseau.js?v=0.3.0';
+import { instantane, appliquer, commandeValide, evenementsPourInvite, lisser } from './instantane.js?v=0.3.0';
 
 const JEU = 'crazyracing';
 const $ = id => document.getElementById(id);
@@ -76,6 +78,7 @@ let joueur = null;
 let prochainPneu = 'slick';
 let fantome = null;
 let fini = false;
+let ligne = null; // la course en ligne : { role: 'hote' | 'invite', lien, … }
 const decors = new Map();
 
 const enJeu = () => !!course && $('titre').hidden && !$('dialogue-resultats').open;
@@ -90,6 +93,7 @@ function toast(texte) {
 
 // ─── Écrans ────────────────────────────────────────────────────────────────
 function montrerTitre() {
+  quitterLigne();
   loop.pause();
   course = null;
   editeur.fermer();
@@ -119,21 +123,23 @@ function lancer(options) {
   const def = defDe(options);
   const chrono = options.mode === 'chrono';
   fantome = chrono ? profil.records[def.id]?.fantome ?? null : null;
-  const voitures = chrono
-    ? [{ id: 'j1', nom: prefs.pseudo, humain: true, pneu: options.pneu }]
-    : grille(options.adversaires, { niveau: options.niveau, pneu: options.pneu }).map(v => (v.humain ? { ...v, nom: prefs.pseudo, pneu: options.pneu } : v));
-  course = nouvelleCourse(def, {
-    mode: chrono ? 'chrono' : 'course',
-    tours: options.tours,
-    meteo: options.meteo,
-    graine: window.__seed ?? (Date.now() % 100000),
-    voitures,
-    bonus: !chrono && options.bonus,
-    fantome,
-    R,
-  });
-  joueur = course.voitures.find(v => v.humain);
-  prochainPneu = options.pneu;
+  const graine = window.__seed ?? (Date.now() % 100000);
+  let voitures;
+  if (chrono) voitures = [{ id: 'j1', nom: prefs.pseudo, humain: true, pneu: options.pneu }];
+  else if (ligne?.role === 'hote') voitures = grilleLigne(options.adversaires, [{ id: 'j1', nom: prefs.pseudo }, { id: 'j2', nom: ligne.nomInvite }], { niveau: options.niveau, pneu: options.pneu });
+  else voitures = grille(options.adversaires, { niveau: options.niveau, pneu: options.pneu }).map(v => (v.humain ? { ...v, nom: prefs.pseudo, pneu: options.pneu } : v));
+  course = nouvelleCourse(def, { mode: chrono ? 'chrono' : 'course', tours: options.tours, meteo: options.meteo, graine, voitures, bonus: !chrono && options.bonus, fantome, R });
+  if (ligne?.role === 'hote') {
+    ligne.evAcc = []; ligne.pas = 0; ligne.snaps = 0; ligne.cmd = commandeValide({});
+    ligne.lien.envoyer({ k: 'go', def: normaliserCircuit({ ...def, id: 'ligne' }), options: { tours: options.tours, meteo: options.meteo, bonus: options.bonus }, voitures, graine, moi: 'j2' });
+  }
+  installerScene(def, options.pneu, 'j1');
+}
+
+// Ce que la course a de commun, jouée seul, hôte ou invité : on installe décor, HUD, commandes
+function installerScene(def, pneu, idMoi) {
+  joueur = course.voitures.find(v => v.id === idMoi);
+  prochainPneu = pneu;
   decor = decorDe(def);
   vue = creerVue();
   miniCarte = dessinerCarte($('hud-carte'), course.piste);
@@ -144,6 +150,7 @@ function lancer(options) {
   $('titre').hidden = true;
   $('hud').hidden = false;
   $('dialogue-resultats').close();
+  $('res-rejouer').hidden = ligne?.role === 'invite';
   tactile.afficher(matchMedia('(pointer: coarse)').matches);
   construireChoixPneus();
   loop.resume();
@@ -158,9 +165,14 @@ function construireChoixPneus() {
   [...$('pneu-choix').children].forEach((b, i) => { b.dataset.pneu = PNEUS[i]; });
 }
 
-function pause() {
+function pause(manuel = false) {
   if (!enJeu() || loop.paused) return;
+  if (ligne) { // en ligne, la course ne s'arrête pas : le menu propose seulement de quitter
+    if (manuel && !$('dialogue-pause').open) { $('recommencer').hidden = true; $('dialogue-pause').showModal(); }
+    return;
+  }
   loop.pause();
+  $('recommencer').hidden = false;
   $('dialogue-pause').showModal();
 }
 
@@ -185,7 +197,8 @@ const champ = (legende, contenu) => el('fieldset', { className: 'champ' }, el('l
 
 function preparer(mode) {
   const o = { ...OPTIONS, ...profil.options };
-  $('course-titre').textContent = mode === 'chrono' ? 'Contre la montre' : 'Course';
+  $('course-titre').textContent = mode === 'chrono' ? 'Contre la montre' : mode === 'ligne' ? 'Course en ligne' : 'Course';
+  $('c-partir').textContent = mode === 'ligne' ? 'Créer la salle' : 'Partir';
   $('c-circuits').replaceChildren(...tousLesCircuits().map(def => {
     const piste = construirePiste(def);
     const cv = el('canvas');
@@ -217,7 +230,7 @@ function preparer(mode) {
     };
     profil.options = opt;
     sauvegarder();
-    lancer({ ...opt, mode });
+    if (mode === 'ligne') ouvrirSalle({ ...opt, mode: 'course', ligne: 'hote' }); else lancer({ ...opt, mode });
   };
   d.returnValue = '';
   d.showModal();
@@ -225,7 +238,7 @@ function preparer(mode) {
 
 $('m-course').onclick = () => preparer('course');
 $('m-chrono').onclick = () => preparer('chrono');
-$('pause').onclick = pause;
+$('pause').onclick = () => pause(true);
 $('reprendre').onclick = () => { $('dialogue-pause').close(); };
 $('dialogue-pause').addEventListener('close', () => { if (enJeu()) loop.resume(); });
 $('recommencer').onclick = () => { $('dialogue-pause').close(); lancer(derniereOptions); };
@@ -271,12 +284,12 @@ loadChangelog().then(liste => {
 const keys = createKeys({
   actions: { pause: ['Escape', 'p'], bonus: [' ', 'e', 'Enter'], p1: '1', p2: '2', p3: '3' },
   onAction: nom => {
-    if (nom === 'pause') pause();
+    if (nom === 'pause') pause(true);
     else if (nom === 'bonus' && enJeu()) entrees.declencherBonus();
     else if (/^p[123]$/.test(nom) && enJeu()) prochainPneu = PNEUS[+nom[1] - 1];
   },
 });
-const pad = createGamepad({ actions: { pause: 'start' }, onAction: nom => { if (nom === 'pause') pause(); } });
+const pad = createGamepad({ actions: { pause: 'start' }, onAction: nom => { if (nom === 'pause') pause(true); } });
 const tactile = creerTactile($('tactile'));
 const entrees = creerEntrees({ keys, pad, tactile });
 
@@ -294,7 +307,7 @@ function traiter(ev) {
       case 'choc': if (e.a === joueur.id || e.b === joueur.id) audio.sfx('coup'); break;
       case 'mur': if (moi && e.vitesse > 60) audio.sfx('coup'); break;
       case 'crevaison': if (moi) message('Crevaison ! Direction les stands', 'mauvais'); break;
-      case 'derapage': if (course.t - dernierCrissement > 0.25) { dernierCrissement = course.t; audio.sfx('crissement'); } break;
+      case 'derapage': if (moi && course.t - dernierCrissement > 0.25) { dernierCrissement = course.t; audio.sfx('crissement'); } break;
       case 'limites': if (moi) { audio.sfx('erreur'); message(`Limites de piste (${e.avert % 3 || 3}/3)`, 'mauvais'); } break;
       case 'penalite': if (moi) { audio.sfx('penalite'); message(`Pénalité +${e.secondes} s — ${e.raison === 'limites' ? 'limites de piste' : 'collision'}`, 'mauvais'); } break;
       case 'tour': if (moi) { audio.sfx('tour'); message(`Tour ${e.tour} : ${temps(e.temps)}${e.meilleur ? ' · meilleur tour' : ''}`, e.meilleur ? 'bon' : ''); } break;
@@ -314,7 +327,7 @@ function finir() {
   loop.pause();
   const def = defDe(derniereOptions);
   const rec = profil.records[def.id];
-  const essai = def.id === 'essai'; // un circuit de l'éditeur pas encore enregistré n'a pas de record
+  const essai = def.id === 'essai' || !!derniereOptions.ligne; // circuit pas enregistré, ou course en ligne : pas de record
   let note = '';
   if (course.mode === 'chrono') {
     if (!essai && course.meilleurTour != null && (!rec?.meilleur || course.meilleurTour < rec.meilleur)) {
@@ -426,6 +439,129 @@ function montrerCode(titre, aide, texte, importer) {
   t.focus(); t.select();
 }
 
+// ─── En ligne, sur le même réseau ──────────────────────────────────────────
+// L'hôte fait tourner toute la course ; l'invité lui envoie ses commandes et dessine
+// ce que l'hôte lui renvoie (instantane.js), une trentaine de fois par seconde.
+const montrerVue = nom => { for (const id of ['ligne-choix', 'ligne-hote', 'ligne-invite']) $(id).hidden = id !== nom; };
+const copier = async texte => { try { await navigator.clipboard.writeText(texte); toast('Code copié'); } catch { toast('Sélectionnez le code et copiez-le avec Ctrl+C'); } };
+
+function quitterLigne() {
+  if (!ligne) return;
+  const l = ligne; ligne = null;
+  try { l.lien?.envoyer({ k: 'bye' }); l.lien?.fermer(); } catch { /* déjà fermé */ }
+}
+
+$('m-ligne').hidden = !reseauDisponible();
+$('m-ligne').onclick = () => { montrerVue('ligne-choix'); $('dialogue-ligne').showModal(); };
+$('ligne-fermer-choix').onclick = () => $('dialogue-ligne').close();
+$('ligne-heberger').onclick = () => { $('dialogue-ligne').close(); preparer('ligne'); };
+$('ligne-rejoindre').onclick = () => {
+  montrerVue('ligne-invite');
+  $('ligne-code-i').value = ''; $('ligne-reponse-i').hidden = true; $('ligne-etat-i').textContent = '';
+  $('ligne-connecter').disabled = false;
+};
+$('ligne-annuler-h').onclick = () => { quitterLigne(); $('dialogue-ligne').close(); };
+$('ligne-annuler-i').onclick = () => { quitterLigne(); $('dialogue-ligne').close(); };
+$('dialogue-ligne').addEventListener('cancel', () => { if (!enJeu()) quitterLigne(); });
+$('ligne-copier-h').onclick = () => copier($('ligne-code-h').value);
+$('ligne-copier-r').onclick = () => copier($('ligne-code-r').value);
+
+// L'hôte : crée la salle, donne son code, attend la réponse
+async function ouvrirSalle(opt) {
+  quitterLigne();
+  montrerVue('ligne-hote');
+  $('ligne-code-h').value = 'Création du code…'; $('ligne-reponse').value = ''; $('ligne-etat-h').textContent = '';
+  $('ligne-lancer').disabled = true;
+  $('dialogue-ligne').showModal();
+  try {
+    const lien = await creerHote();
+    ligne = { role: 'hote', lien, opt, nomInvite: 'Invité', pret: false, cmd: commandeValide({}), evAcc: [], pas: 0, snaps: 0 };
+    $('ligne-code-h').value = lien.code;
+    lien.surMessage = o => {
+      if (o.k === 'hello') {
+        ligne.nomInvite = String(o.nom ?? 'Invité').replace(/[<>\u0000-\u001f]/g, '').slice(0, 12) || 'Invité';
+        if (ligne.nomInvite === prefs.pseudo) ligne.nomInvite = `${ligne.nomInvite.slice(0, 10)} 2`; // deux pilotes qui s'appellent pareil se confondraient
+        ligne.pret = true;
+        $('ligne-etat-h').textContent = `${ligne.nomInvite} est connecté. À vous de lancer !`;
+        $('ligne-lancer').disabled = false;
+      } else if (o.k === 'in') ligne.cmd = commandeValide(o);
+      else if (o.k === 'bye') lien.fermer();
+    };
+    lien.surFermeture = () => {
+      if (ligne?.lien !== lien) return;
+      if (course && enJeu() && !$('dialogue-resultats').open) {
+        const v2 = course.voitures.find(v => v.id === 'j2');
+        if (v2) { v2.humain = false; v2.niveau = 'moyen'; }
+        toast(`${ligne.nomInvite} a quitté la course : sa voiture est reprise par l'ordinateur`);
+      } else { $('ligne-etat-h').textContent = 'Connexion perdue.'; $('ligne-lancer').disabled = true; }
+      ligne.pret = false;
+    };
+    $('ligne-valider').onclick = async () => {
+      try {
+        $('ligne-etat-h').textContent = 'Connexion…';
+        await lien.accepter($('ligne-reponse').value);
+        await lien.pret;
+        $('ligne-etat-h').textContent = 'Connecté, en attente du pseudo de l\'autre joueur…';
+      } catch (e) { $('ligne-etat-h').textContent = e.message; }
+    };
+    $('ligne-lancer').onclick = () => { $('dialogue-ligne').close(); lancer(ligne.opt); };
+  } catch (e) { $('ligne-code-h').value = ''; $('ligne-etat-h').textContent = `Impossible de créer le code : ${e.message}`; }
+}
+
+// L'invité : colle le code de l'hôte, rend sa réponse, attend le départ
+$('ligne-connecter').onclick = async () => {
+  quitterLigne();
+  $('ligne-connecter').disabled = true;
+  $('ligne-etat-i').textContent = 'Création de la réponse…';
+  try {
+    const lien = await rejoindre($('ligne-code-i').value);
+    ligne = { role: 'invite', lien, cibles: new Map(), recu: 0, pas: 0, derniere: '' };
+    $('ligne-code-r').value = lien.code; $('ligne-reponse-i').hidden = false;
+    $('ligne-etat-i').textContent = 'En attente de l\'hôte…';
+    lien.surMessage = o => recevoir(o);
+    lien.surFermeture = () => {
+      if (ligne?.lien !== lien) return;
+      toast('Connexion perdue'); $('dialogue-ligne').close(); $('dialogue-resultats').close(); $('dialogue-pause').close(); montrerTitre();
+    };
+    lien.pret.then(() => { lien.envoyer({ k: 'hello', nom: prefs.pseudo }); $('ligne-etat-i').textContent = 'Connecté : la course démarre quand l\'hôte la lance.'; }).catch(e => { $('ligne-etat-i').textContent = e.message; $('ligne-connecter').disabled = false; });
+  } catch (e) { $('ligne-etat-i').textContent = e.message; $('ligne-connecter').disabled = false; }
+};
+
+// Ce que l'invité reçoit de l'hôte
+function recevoir(o) {
+  if (o.k === 'go') {
+    let def;
+    try { def = normaliserCircuit({ ...o.def, id: 'essai' }); } catch (e) { toast(e.message); return; }
+    const voitures = (Array.isArray(o.voitures) ? o.voitures : []).slice(0, 12).map(v => ({
+      id: String(v.id).slice(0, 8), nom: String(v.nom ?? '').replace(/[<>]/g, '').slice(0, 12), humain: !!v.humain, equipe: Number.isInteger(v.equipe) ? v.equipe : undefined,
+      pneu: ['slick', 'inter', 'pluie'].includes(v.pneu) ? v.pneu : 'slick', niveau: 'moyen', style: Number.isFinite(v.style) ? v.style : 0.5,
+    }));
+    const opts = o.options ?? {};
+    derniereOptions = { mode: 'course', def, circuit: 'essai', tours: Math.max(1, Math.min(20, opts.tours | 0 || 3)), meteo: ['sec', 'humide', 'pluie', 'variable'].includes(opts.meteo) ? opts.meteo : 'sec', bonus: !!opts.bonus, pneu: voitures.find(v => v.humain)?.pneu ?? 'slick', ligne: 'invite' };
+    course = nouvelleCourse(def, { mode: 'course', tours: derniereOptions.tours, meteo: derniereOptions.meteo, graine: Number.isFinite(o.graine) ? o.graine : 1, voitures, bonus: derniereOptions.bonus, R });
+    fantome = null;
+    ligne.cibles = new Map(); ligne.recu = performance.now(); ligne.pas = 0;
+    $('dialogue-ligne').close();
+    installerScene(def, derniereOptions.pneu, String(o.moi ?? 'j2'));
+    if (!joueur) { toast('Course illisible'); montrerTitre(); }
+  } else if (o.k === 'snap' && course && ligne?.role === 'invite' && joueur) {
+    const visibles = ligne.cibles.size ? course.voitures.map(v => [v, v.x, v.y, v.cap]) : [];
+    const evs = appliquer(course, o);
+    ligne.cibles = new Map(course.voitures.map(v => [v.id, { x: v.x, y: v.y, vx: v.vx, vy: v.vy, cap: v.cap }]));
+    for (const [v, x, y, cap] of visibles) { v.x = x; v.y = y; v.cap = cap; }
+    ligne.recu = performance.now();
+    traiter(evs);
+    if (course.phase === 'fin' && course.classement && !fini) finir();
+  } else if (o.k === 'bye') { toast('L\'hôte a quitté la course'); $('dialogue-resultats').close(); $('dialogue-pause').close(); montrerTitre(); }
+}
+
+// Ce que l'hôte envoie : un instantané toutes les deux images ; la trace sèche, plus rarement
+function envoyerInstantane(force = false) {
+  const evs = evenementsPourInvite(ligne.evAcc, 'j2');
+  ligne.evAcc = [];
+  ligne.lien.envoyer(instantane(course, evs, { avecTrace: force || ligne.snaps++ % 40 === 0 }));
+}
+
 // ─── Boucle ────────────────────────────────────────────────────────────────
 const loop = createLoop({
   update(dt) {
@@ -433,7 +569,20 @@ const loop = createLoop({
     if (!course || course.phase === 'fin') return;
     const cmd = entrees.lire(dt);
     cmd.pneu = prochainPneu;
-    traiter(avancerCourse(course, dt, { [joueur.id]: cmd }));
+    if (ligne?.role === 'invite') { // l'invité conduit, l'hôte calcule
+      if (ligne.pas++ % 2 === 0) ligne.lien.envoyer({ k: 'in', ...cmd });
+      lisser(course, ligne.cibles, dt, (performance.now() - ligne.recu) / 1000);
+      return;
+    }
+    const commandes = { [joueur.id]: cmd };
+    if (ligne?.role === 'hote') commandes.j2 = ligne.cmd;
+    const evs = avancerCourse(course, dt, commandes);
+    if (ligne?.role === 'hote') {
+      ligne.evAcc.push(...evs);
+      if (evs.some(e => e.type === 'fin')) envoyerInstantane(true);
+      else if (ligne.pas++ % 2 === 0) envoyerInstantane();
+    }
+    traiter(evs);
   },
   render() {
     if (editeur.actif) { editeur.dessiner(px.ctx); return; }
@@ -457,7 +606,7 @@ startUpdateCheck({
 
 // ─── Mode debug (section 18) : chargé seulement avec ?debug=1 ──────────────
 if (DEBUG) {
-  const { installDebug, seedFromUrl } = await import('./lib/debug.js?v=0.2.0');
+  const { installDebug, seedFromUrl } = await import('./lib/debug.js?v=0.3.0');
   window.__seed = seedFromUrl() ?? undefined;
   const placer = p => {
     if (!course) return;

@@ -12,7 +12,7 @@
                 forme de l'écran (monde qui défile) ; `width` est un minimum.
 
    Module ES sans dépendance :
-     import { createPixelCanvas } from './lib/pixel-canvas.js?v=0.2.0'
+     import { createPixelCanvas } from './lib/pixel-canvas.js?v=0.3.0'
      const px = createPixelCanvas(document.querySelector('canvas'), {
        width: 320, height: 180, mode: 'extend',
        onResize: ({ width, height, scale }) => {},

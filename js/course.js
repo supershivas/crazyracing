@@ -1,11 +1,11 @@
 // Les règles d'une course : grille, feux, tours, météo, stands, bonus, limites
 // de piste, pénalités, classement. Du JS pur, sans DOM, sans hasard ni horloge
 // du navigateur (sections 10 et 12) : même graine, mêmes commandes → même course.
-import { createRng } from './lib/rng.js?v=0.2.0';
-import { construirePiste, projeter, pointA } from './piste.js?v=0.2.0';
-import { nouvelleVoiture, pasVoiture, contreMur, contacts, adherence } from './voiture.js?v=0.2.0';
-import { piloteIA } from './ia.js?v=0.2.0';
-import { REGLAGES } from './data/reglages.js?v=0.2.0';
+import { createRng } from './lib/rng.js?v=0.3.0';
+import { construirePiste, projeter, pointA } from './piste.js?v=0.3.0';
+import { nouvelleVoiture, pasVoiture, contreMur, contacts, adherence } from './voiture.js?v=0.3.0';
+import { piloteIA } from './ia.js?v=0.3.0';
+import { REGLAGES } from './data/reglages.js?v=0.3.0';
 
 export const METEOS = ['sec', 'humide', 'pluie', 'variable'];
 export const PNEUS = ['slick', 'inter', 'pluie'];
@@ -249,7 +249,9 @@ export function avancerCourse(c, dt, commandes = {}) {
     v.hors = dehors;
 
     // La trace sèche la piste là où l'on roule
-    if (sol === 'piste' && Math.abs(v.d) < demi * 0.55 && v.vitesse > 20) c.trace[v.i] = Math.min(1, c.trace[v.i] + dt * 0.5);
+    if (sol === 'piste' && Math.abs(v.d) < demi * 0.55 && v.vitesse > 20) {
+      for (let j = -2; j <= 2; j++) { const k = (v.i + j + piste.n) % piste.n; c.trace[k] = Math.min(1, c.trace[k] + dt * 3); }
+    }
 
     // Bonus ramassés
     for (const b of c.bonus) {
@@ -306,5 +308,13 @@ export function grille(n, { niveau = 'moyen', pneu } = {}) {
   const liste = [];
   for (let k = 0; k < n; k++) liste.push({ id: `ia${k + 1}`, nom: nomsIA(k), humain: false, niveau, style: ((k * 0.37) % 1), pneu });
   liste.splice(Math.min(n, 3), 0, { id: 'j1', nom: 'Vous', humain: true, pneu }); // le joueur part du milieu de la grille
+  return liste;
+}
+
+// Une grille en ligne : les humains au milieu de la grille, les voitures de l'ordinateur autour
+export function grilleLigne(n, humains, { niveau = 'moyen', pneu } = {}) {
+  const liste = [];
+  for (let k = 0; k < n; k++) liste.push({ id: `ia${k + 1}`, nom: nomsIA(k), humain: false, niveau, style: ((k * 0.37) % 1), pneu });
+  liste.splice(Math.min(n, 3), 0, ...humains.map(h => ({ id: h.id, nom: h.nom, humain: true, pneu })));
   return liste;
 }

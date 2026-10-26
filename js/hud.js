@@ -1,5 +1,5 @@
 // Le HUD en DOM : lit la course, n'écrit que ce qui a changé.
-import { eauCible } from './course.js?v=0.2.0';
+import { eauCible } from './course.js?v=0.3.0';
 
 const $ = id => document.getElementById(id);
 const NOMS_PNEU = { slick: 'Slick', inter: 'Inter', pluie: 'Pluie' };

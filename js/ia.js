@@ -2,7 +2,7 @@
 // du joueur quand il ramasse le bonus « pilote ». Du JS pur.
 // Il regarde devant lui, calcule la vitesse que chaque virage permet avec les
 // pneus qu'il a, freine à temps, et cherche un côté libre quand on le gêne.
-import { pointA } from './piste.js?v=0.2.0';
+import { pointA } from './piste.js?v=0.3.0';
 
 const angle = a => { while (a > Math.PI) a -= 2 * Math.PI; while (a < -Math.PI) a += 2 * Math.PI; return a; };
 const borne = (x, a, b) => Math.max(a, Math.min(b, x));

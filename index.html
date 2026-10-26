@@ -8,8 +8,8 @@
 <link rel="icon" href="favicon.ico" sizes="any">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<link rel="stylesheet" href="js/lib/game.css?v=0.2.0">
-<link rel="stylesheet" href="css/style.css?v=0.2.0">
+<link rel="stylesheet" href="js/lib/game.css?v=0.3.0">
+<link rel="stylesheet" href="css/style.css?v=0.3.0">
 </head>
 <body>
 <div class="jeu-ecran" id="ecran">
@@ -60,7 +60,7 @@
     <nav class="titre-menu">
       <button class="bouton" id="m-course">Course</button>
       <button class="bouton" id="m-chrono">Contre la montre</button>
-      <button class="bouton" id="m-ligne" hidden>En ligne</button>
+      <button class="bouton" id="m-ligne">En ligne (même réseau)</button>
       <button class="bouton" id="m-editeur">Éditeur de circuits</button>
     </nav>
     <button class="icone titre-reglages" id="ouvrir-reglages" aria-label="Réglages">
@@ -119,6 +119,40 @@
   </div>
 </dialog>
 
+<dialog id="dialogue-ligne" aria-label="Course en ligne">
+  <h2>En ligne, sur le même réseau</h2>
+  <div class="menu" id="ligne-choix">
+    <button class="bouton" id="ligne-heberger">Créer une course</button>
+    <button class="bouton secondaire" id="ligne-rejoindre">Rejoindre une course</button>
+    <button class="bouton secondaire" id="ligne-fermer-choix">Fermer</button>
+  </div>
+  <div id="ligne-hote" hidden>
+    <p class="aide"><b>1.</b> Envoyez ce code à l'autre joueur (message, mail…).</p>
+    <textarea id="ligne-code-h" rows="4" readonly spellcheck="false"></textarea>
+    <button class="bouton secondaire" id="ligne-copier-h">Copier</button>
+    <p class="aide"><b>2.</b> Collez ici le code qu'il vous renvoie.</p>
+    <textarea id="ligne-reponse" rows="4" spellcheck="false" autocomplete="off"></textarea>
+    <button class="bouton secondaire" id="ligne-valider">Connecter</button>
+    <p class="ligne-etat" id="ligne-etat-h" aria-live="polite"></p>
+    <div class="menu menu-ligne">
+      <button class="bouton" id="ligne-lancer" disabled>Lancer la course</button>
+      <button class="bouton secondaire" id="ligne-annuler-h">Annuler</button>
+    </div>
+  </div>
+  <div id="ligne-invite" hidden>
+    <p class="aide"><b>1.</b> Collez ici le code de l'hôte.</p>
+    <textarea id="ligne-code-i" rows="4" spellcheck="false" autocomplete="off"></textarea>
+    <button class="bouton secondaire" id="ligne-connecter">Se connecter</button>
+    <div id="ligne-reponse-i" hidden>
+      <p class="aide"><b>2.</b> Renvoyez ce code à l'hôte, puis attendez : la course démarre toute seule.</p>
+      <textarea id="ligne-code-r" rows="4" readonly spellcheck="false"></textarea>
+      <button class="bouton secondaire" id="ligne-copier-r">Copier</button>
+    </div>
+    <p class="ligne-etat" id="ligne-etat-i" aria-live="polite"></p>
+    <button class="bouton secondaire" id="ligne-annuler-i">Annuler</button>
+  </div>
+</dialog>
+
 <dialog id="dialogue-circuits" aria-label="Mes circuits">
   <h2>Éditeur de circuits</h2>
   <div class="menu" id="mes-circuits"></div>
@@ -166,6 +200,6 @@
 </dialog>
 
 <div class="jeu-toast" id="toast" role="status" hidden></div>
-<script type="module" src="js/main.js?v=0.2.0"></script>
+<script type="module" src="js/main.js?v=0.3.0"></script>
 </body>
 </html>

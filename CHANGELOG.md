@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.0 — 2026-10-26
+- Course en ligne sur le même réseau : l'hôte crée un code, l'invité le colle et renvoie le sien ; aucun serveur (WebRTC)
+- L'hôte fait tourner la course, l'invité conduit et voit les voitures de l'ordinateur ; la voiture d'un joueur qui part est reprise par l'ordinateur
+- La trace sèche (piste mouillée) se forme vraiment sous les roues
+
 ## 0.2.0 — 2026-10-26
 - Éditeur de circuits : on déplace, ajoute et retire des points, on choisit le départ, on essaie tout de suite, on enregistre, on partage par un code (CR1.…)
 - Le tracé est vérifié en direct (virage trop serré, départ dans un virage, tronçons qui se frôlent)

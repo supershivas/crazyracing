@@ -92,6 +92,7 @@ Sweetie 16 (GrafxKid), en entier ; `x` et `z` sont les deux couleurs de livrée 
   limites de piste, pénalités, classement. Pur, sans hasard hors `rng`.
 - `js/render.js` — le dessin ; ne modifie jamais l'état de la course.
 - `js/editeur.js` — l'éditeur de circuits (points de contrôle, vérification en direct) ; `js/circuit-code.js` — le code de partage (pur, assaini).
+- `js/reseau.js` — la liaison WebRTC sans serveur (codes CRO. / CRR.) ; `js/instantane.js` — ce que l'hôte envoie à l'invité (pur, assaini).
 - `js/hud.js`, `js/entrees.js` — le HUD en DOM ; clavier, manette et doigt → commande.
 - `js/palette.js`, `js/sprites-data.js`, `js/data/` (réglages, circuits) — la donnée.
 - `js/design-store.js` — le contenu publié par l'atelier (`assets/design/`)
@@ -121,6 +122,11 @@ node outils/stamp-version.mjs            # après chaque changement de version.j
 
 ## Pièges connus
 
+- **En ligne** : l'hôte calcule tout (`avancerCourse` avec les commandes de l'invité) ; l'invité ne fait
+  tourner aucune règle, il applique des instantanés (`appliquer`) et lisse les positions. Tout ce qui
+  vient du réseau est borné champ par champ (`commandeValide`, `appliquer`, `normaliserCircuit`).
+  Un `[hidden]` est écrasé par un `display` de classe : la règle `[hidden] { display: none !important }`
+  est dans `style.css`.
 - **Circuit qui se croise** (Pont du Huit) : `projeter` cherche autour du dernier échantillon connu
   (`v.i`), jamais partout, sinon la voiture saute de branche au croisement. Toute téléportation
   (debug, tests) doit mettre `v.i` à jour.

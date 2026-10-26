@@ -150,3 +150,11 @@ legend { padding: 0; margin-bottom: 4px; font-size: 13px; opacity: .85; }
 .ed-actions { display: flex; flex-wrap: wrap; gap: var(--pas); }
 .ed-actions .bouton { flex: 1 1 auto; min-height: 40px; font-size: 14px; }
 dialog textarea { width: min(80vw, 480px); background: var(--jeu-ombre); color: var(--jeu-encre); border: 0; border-bottom: 2px solid var(--jeu-encre); font: 12px/1.4 var(--jeu-police); padding: 8px; resize: vertical; -webkit-user-select: text; user-select: text; word-break: break-all; margin-bottom: var(--pas); }
+
+/* Le jeu en ligne */
+#dialogue-ligne { width: min(94vw, 520px); }
+#dialogue-ligne textarea { width: 100%; }
+#dialogue-ligne .bouton { min-height: 40px; margin-bottom: var(--pas); }
+#dialogue-ligne .menu .bouton { margin-bottom: 0; }
+.ligne-etat { min-height: 1.4em; font-size: 13px; color: var(--jeu-accent); margin: 0 0 var(--pas); }
+[hidden] { display: none !important; }

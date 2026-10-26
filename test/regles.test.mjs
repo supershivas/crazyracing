@@ -219,3 +219,31 @@ test('un code abîmé ou hostile est refusé ou assaini', () => {
   assert.equal(c.largeur, 60);
   assert.deepEqual(c.points[0], [4000, -4000]);
 });
+
+group('course en ligne');
+import { instantane, appliquer, commandeValide, evenementsPourInvite } from '../js/instantane.js';
+test('l\'invité reconstitue la course de l\'hôte à partir des instantanés', () => {
+  const def = CIRCUITS[1];
+  const mk = () => nouvelleCourse(def, { tours: 3, voitures: grille(4), graine: 9, bonus: true, meteo: 'variable' });
+  const hote = mk(), invite = mk();
+  const j1 = pilote(hote); j1.pilote = 1e9;
+  const evs = rouler(hote, 25);
+  const retour = appliquer(invite, JSON.parse(JSON.stringify(instantane(hote, evs.slice(-3), { avecTrace: true }))));
+  assert.ok(retour.length <= 3);
+  for (const v of hote.voitures) {
+    const w = invite.voitures.find(x => x.id === v.id);
+    assert.ok(Math.hypot(v.x - w.x, v.y - w.y) < 0.2, `${v.id} position`);
+    assert.equal(w.tour, v.tour); assert.equal(w.pos, v.pos); assert.equal(w.pneu, v.pneu);
+    assert.ok(Math.abs(w.usure - v.usure) < 0.01);
+  }
+  assert.ok(Math.abs(invite.t - hote.t) < 0.01 && invite.phase === hote.phase && Math.abs(invite.eau - hote.eau) < 0.01);
+  assert.ok(hote.trace.some(t => t > 0.2) && Math.abs(invite.trace.reduce((a, b) => a + b) - hote.trace.reduce((a, b) => a + b)) < hote.trace.length * 0.06);
+});
+test('un instantané hostile ne casse rien', () => {
+  const c = nouvelleCourse(CIRCUITS[0], { tours: 2, voitures: grille(2), graine: 1 });
+  const avant = JSON.stringify(c);
+  appliquer(c, { k: 'snap', t: 'x', p: '<script>', v: [{ id: 'j1', x: 'NaN', y: Infinity, pneu: 'tank', bonus: 'bombe', tour: 1.5 }, null, { id: 'inconnu' }], b: 'oui', ev: [{ type: 'rm -rf' }, null, 4] });
+  assert.equal(JSON.stringify(c), avant);
+  assert.deepEqual(commandeValide({ gaz: 99, frein: 'x', volant: -5, recul: 1, pneu: 'missile' }), { gaz: 1, frein: 0, volant: -1, recul: true, bonus: false, pneu: undefined });
+  assert.equal(evenementsPourInvite([{ type: 'derapage', id: 'j1' }, { type: 'derapage', id: 'j2' }, { type: 'inconnu' }, { type: 'tour', id: 'j1' }], 'j2').length, 2);
+});

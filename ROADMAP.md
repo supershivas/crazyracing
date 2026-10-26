@@ -17,9 +17,12 @@ Statuts : **à l'étude** · **validé** (Jérôme a tranché) · **en cours** �
 - [x] Des adversaires, des limites de piste, un classement
 - [ ] Le critère de validation, mesuré (voir DESIGN.md)
 
-### Jeu en ligne sur le même réseau (WebRTC, code à échanger)
+### Jeu en ligne : à éprouver sur deux vraies machines
 
-**Statut** : validé (Jérôme, demande initiale)
+**Statut** : à mesurer
+**Constat** : testé entre deux pages d'un même navigateur ; pas encore sur deux ordinateurs.
+**Mesure** : deux ordinateurs d'un réseau domestique se connectent et finissent une course de 5 tours sans à-coup ; le code (≈ 485 caractères) se passe par message.
+**Limite connue** : les adresses locales sont masquées derrière un nom `.local` (mDNS) ; sur un réseau qui bloque mDNS la liaison échoue.
 
 ## À l'étude
 

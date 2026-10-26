@@ -2,10 +2,10 @@
 // Chaque modification est gardée tout de suite dans ce navigateur (brouillon),
 // visible dans le jeu de ce navigateur, puis publiée d'un geste dans le dépôt
 // (un commit sur main, par l'API de GitHub) : assets/design/*.json.
-import { mountPixelEditor } from './lib/pixel-editor.js?v=0.2.0';
-import { createPublisher, TOKEN_URL } from './lib/gh-publish.js?v=0.2.0';
-import { PALETTE } from './palette.js?v=0.2.0';
-import { chargerContenu, lireBrouillon, ecrireBrouillon } from './design-store.js?v=0.2.0';
+import { mountPixelEditor } from './lib/pixel-editor.js?v=0.3.0';
+import { createPublisher, TOKEN_URL } from './lib/gh-publish.js?v=0.3.0';
+import { PALETTE } from './palette.js?v=0.3.0';
+import { chargerContenu, lireBrouillon, ecrireBrouillon } from './design-store.js?v=0.3.0';
 
 const REPO = 'supershivas/crazyracing';
 const $ = id => document.getElementById(id);
