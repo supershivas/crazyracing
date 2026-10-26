@@ -45,7 +45,7 @@ export function majHud(c, v, { meilleurPerso, prochainPneu } = {}) {
   poser('hud-meteo', `${ciel}${plus > eau + 0.25 ? ' ↗ pluie bientôt' : plus < eau - 0.25 ? ' ↘ ça sèche' : ''}`);
   poser('hud-limites', v.avert ? `Limites ${v.avert % 3}/3` : '');
   poser('hud-penalite', v.penalite ? `+${v.penalite} s` : '');
-  const bonus = v.pilote > 0 ? `Auto ${Math.ceil(v.pilote)}` : v.turbo > 0 ? 'Turbo' : v.bonus ? NOMS_BONUS[v.bonus] : '—';
+  const bonus = v.pilote > 0 ? (v.pilote > 99 ? 'Auto' : `Auto ${Math.ceil(v.pilote)}`) : v.turbo > 0 ? 'Turbo' : v.bonus ? NOMS_BONUS[v.bonus] : '—';
   poser('bonus-nom', bonus);
   $('bonus-case').classList.toggle('plein', !!v.bonus);
 }

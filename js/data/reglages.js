@@ -28,5 +28,5 @@ export const REGLAGES = {
   stand: { duree: 2.6, vitesseMax: 30, largeur: 18, avant: 30, apres: 70 },
   bonus: { nombre: 7, rayon: 9, retour: 9, turbo: 2.2, turboPousse: 0.7, pilote: 6, bouclier: 8, reparation: 0.35 },
   course: { feux: 3, grille: 10, ecart: 22, arrivee: 6 },
-  ia: { lookAvant: 0.55, niveaux: { facile: 0.82, moyen: 0.93, difficile: 1.0 } },
+  ia: { lookAvant: 0.55, niveaux: { facile: 0.82, moyen: 0.93, difficile: 1.04 } },
 };

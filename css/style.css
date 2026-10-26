@@ -158,3 +158,6 @@ dialog textarea { width: min(80vw, 480px); background: var(--jeu-ombre); color: 
 #dialogue-ligne .menu .bouton { margin-bottom: 0; }
 .ligne-etat { min-height: 1.4em; font-size: 13px; color: var(--jeu-accent); margin: 0 0 var(--pas); }
 [hidden] { display: none !important; }
+.tactile-g { margin-left: 168px; }
+.tactile-d { margin-right: 150px; }
+@media (max-height: 460px) { .tactile { bottom: calc(var(--pas) * 7); } .tactile button { width: 60px; height: 60px; } }

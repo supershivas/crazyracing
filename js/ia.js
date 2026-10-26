@@ -11,7 +11,8 @@ const borne = (x, a, b) => Math.max(a, Math.min(b, x));
 //         stand : null, ou { ds (distance au box), dedans, service } quand le pilote va changer de pneus }
 export function piloteIA(v, ctx) {
   const { piste, R, g } = ctx;
-  const niv = R.ia.niveaux[v.niveau] ?? 0.93;
+  // Chaque pilote a son talent : un à deux pour cent d'écart suffit à étirer le peloton
+  const niv = (R.ia.niveaux[v.niveau] ?? 0.93) * (0.97 + 0.06 * ((v.style * 7.3) % 1));
   const demi = piste.largeur / 2;
 
   // Un côté libre : on s'écarte d'une voiture proche devant soi
